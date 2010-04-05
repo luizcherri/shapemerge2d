@@ -4,38 +4,115 @@
 BooleanOp::BooleanOp()
 {
 }
-#if 0
-void BooleanOp::mark_side(int side_,Edge* edge_,std::set<Cell*>& cells)
+void BooleanOp::mark_left(Edge* edge_)
 {
-	assert(side_==0 || side_==1);
-	if (edge->side[side_]!=NULL)
+	if (edge->side[0]!=NULL)
 		return; //already marked
 	Edge* curedge=edge_;
 	Cell* cell=new Cell();
-	cells.insert(cell);
-	Vertex last_cell_end=edge->v2;
+	Vertex last_cell_end=edge->v1;
+
 	for(;;)
 	{
-		int markside=side_;
-		if (last_cell_end==next->v2)
-			markside+=1;
+		int markside=0; //0 is left side
+		if (last_cell_end==curedge->v2)
+		{
+			markside=1;
+			last_cell_end=curedge->v1;
+		}
 		else
-		if (last_cell_end!=next->v1)
-			throw std::runtime_error("Unexpected error!");
-		markside&=1;
+		{
+			if (last_cell_end!=curedge->v1)
+				throw std::runtime_error("Unexpected error!");
+			assert(last_cell_end==curedge->v1);
+			markside=0;
+			last_cell_end=curedge->v2;
+		}
+
 		assert(curedge->side[markside]==NULL);
 		curedge->side[markside]=cell;
 		cell->edges.insert(curedge);
-		if (curedge->side[0] && curedge->side[1])
+		if (curedge->side[0] && curedge->side[1]) //Cells on both sides of edge have been found.
 		{
 			curedge->side[0]->neighbors[curedge->side[1]].insert(curedge);
 			curedge->side[1]->neighbors[curedge->side[0]].insert(curedge);
 		}
-		Edge* next=get_out_edge_from_in_edge(curedge);
+		Edge* next=get_out_edge_from_in_edge(last_cell_end,curedge);
 		if (next==edge)
 			return;//finished
+		curedge=next;
 	}
 }
+struct EdgeSorter
+{
+	Vertex v;
+	Edge* curedge;
+	Vector vec;
+	double avec;
+	EdgeSorter(Vertex pv,Edge* pcuredge) : v(pv), curedge(pcuredge)
+	{
+		if (curedge->v1==v)
+		{
+			vec=v-curedge->v2;
+		}
+		else
+		{
+			assert(curedge->v2==v);
+			vec=v-curedge->v1;
+		}
+		avec=atan2(vec.y,vec.x);
+	}
+	bool operator()(Edge* a,Edge* b)
+	{
+		Vertex va;
+		if (a->v1==v)
+		{
+			va=v-a->v2;
+		}
+		else
+		{
+			assert(a->v2==v);
+			va=v-a->v1;
+		}
+		Vertex vb;
+		if (b->v1==v)
+		{
+			vb=v-b->v2;
+		}
+		else
+		{
+			assert(b->v2==v);
+			vb=v-b->v1;
+		}
+		double aa=atan2(va.y,va.x);
+		double ab=atan2(vb.y,vb.x);
+		double daa=avec-aa;
+		double dab=avec-ab;
+		if (daa<0) daa+=2*PI;
+		if (daa>=2*PI) daa-=2*PI;
+		if (dab<0) dab+=2*PI;
+		if (dab>=2*PI) dab-=2*PI;
+		return daa<dab;
+
+	}
+};
+Edge* BooleanOp::get_out_edge_from_in_edge(Vertex v,Edge* curedge)
+{
+	std::set<Edge*>& candidates_set=edgemap[v];
+	std::vector<Edge*> candidates;
+	candidates.assign(canidates_set.begin(),candidates_set.end());
+	EdgeSorter es(v,curedge);
+	std::sort(candidates.begin(),candidates.end(),es);
+	BOOST_FOREACH(Edge* cand,candidates)
+	{
+		if (cand==curedge) continue;
+		return cand;
+	}
+	throw std::runtime_error("Find no outgoing edge from vertex");
+	return NULL;
+}
+
+#if 0
 struct LeftmostEdge
 {
 	bool operator()(const Cell* a,const Edge* b)
@@ -104,12 +181,6 @@ Vertex Cell::approx_center() const
 	sy/=edges.size()*2;
 	return Vertex(round(sx),round(sy));
 }
-static Vertex leftmost_vertex_of(const Edge& e)
-{
-	if (e.v1.x<e.v2.x || (e.v1.x==e.v2.x && e.v1.y<e.v2.y))
-		return e.v1;
-	return e.v2;
-}
 Vertex Cell::leftmost_vertex() const
 {
 	if (edges.size()==0)
@@ -148,9 +219,81 @@ void BooleanOp::step5_eliminate_deadends()
 	BOOST_FOREACH(VertexPair vp,vp_remove)
 		pair2edge.remove(vp);
 }
+
+static Vertex leftmost_vertex_of(const Edge& e)
+{
+	if (e.v1.x<e.v2.x || (e.v1.x==e.v2.x && e.v1.y<e.v2.y))
+		return e.v1;
+	return e.v2;
+}
+
 void BooleanOp::step6_determine_cell_cover();
 {
-	BOOST_FOREACH(std::pair<VertexPair,Edge>)
+	if (vertices.size()==0) throw std::runtime_error("No vertices, can't determine cell cover");
+	Vertex leftmost=*vertices.begin();
+	BOOST_FOREACH(Vertex v,vertices)
+	{
+		if (v.x<leftmost.x) leftmost=v;
+		else if (v.x==leftmost.x && v.y<leftmost.y)
+			leftmost=v;
+	}
+	std::set<Edge*>& edges=edgemap[leftmost];
+	assert(edges.size()>0);
+	Edge* startedge=NULL;
+	BOOST_FOREACH(Edge* edge,edges)
+	{
+		if (startedge==NULL) startedge=edge;
+		if (edge->line_is_vertical)
+		{
+			//Any vertical line at the leftmost vertex, *MUST* be an outer edge
+			startedge=edge;
+			break;
+		}
+		if (std::abs(edge->line_k)>std::abs(startedge->line_k))
+			startedge=edge;
+	}
+	assert(startedge!=NULL);
+	int sid=0;
+	if (startedge->side[0]!=NULL) sid=0;
+	if (startedge->side[1]!=NULL) sid=1;
+	if (startedge->side[sid]==NULL) throw std::runtime_error("Starting edge is not adjacent to a cell! Strange!");
+	Cell* curcell=startedge->side[sid];
+	std::set<Polygon*> curpolys=startedge->polys;
+	std::set<Cell*> visited_cells;
+	recurse_determine_cover(curcell,curpolys,visited_cells);
+}
+void BooleanOp::recurse_determine_cover(Cell* curcell,std::set<Polygon*> curpolys,std::set<Cell*>& visited)
+{
+	curcell->cover=curpolys;
+	BOOST_FOREACH(Edge* border,curcell->edges)
+	{
+		Cell* othercell=NULL;
+		if (border->side[0]==curcell)
+		{
+			othercell=border->side[1];
+		}
+		else
+		{
+			assert(border->side[1]==curcell);
+			othercell=border->side[0];
+		}
+		if (visited_cells.find(othercell)!=visited_cells.end())
+			continue; //already visited
+		std::set<Polygon*> adjusted=curpolys;
+		BOOST_FOREACH(Polygon* poly,border->polys);
+		{
+			std::set<Polygon*>::iterator it;
+			if ((it=adjusted.find(poly))==adjusted.end())
+			{
+				adjusted.insert(poly);
+			}
+			else
+			{
+				adjusted.remove(it);
+			}
+			recurse_determine_cover(othercell,adjusted,visisted);
+		}
+	}
 }
 void BooleanOp::step1_add_lines(Shape* shape_a,Shape* shape_b)
 {
@@ -219,6 +362,10 @@ void BooleanOp::step3_create_edges()
 			Vertex v2=ver[i];
 			VertexPair pair(v1,v2);
 			Edge& edge=pair2edge[pair];
+			edge.v1=v1;
+			edge.v2=v2;
+			edge.line_k=line.get_k();
+			edge.line_is_vertical=line.is_vertical();
 			edgemap[v1].insert(&edge);
 			edgemap[v2].insert(&edge);
 			BOOST_FOREACH(int tag,l.get_tags())
@@ -236,7 +383,7 @@ void BooleanOp::step4_create_cells()
 	std::map<VertexPair,Edge>::iterator it2=pair2edge.end();
 	for(;it!=it2;++it)
 	{
-		mark_left(&(it->second));
+		mark_side(0,&(it->second));
 	}
 
 

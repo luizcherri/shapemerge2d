@@ -142,6 +142,15 @@ Line2 Line2::reversed() const
 	return l;
 }
 
+bool Line2::is_vertical() const
+{
+	if (v1.x==v2.x) return true;
+	return false;
+}
+Rational Line2::get_k() const
+{
+	return k;
+}
 
 bool Line2::get_yrange(int x,int& inty1,int& inty2) const
 {

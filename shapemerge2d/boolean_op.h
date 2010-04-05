@@ -22,7 +22,6 @@ struct Cell
 #ifndef SWIG
 	std::set<Edge*> edges;
 	std::set<Polygon*> cover;
-	std::map<Cell*,std::set<Edge*> > neighbors;
 #endif
 
 	///Calculate the approximate center point of the
@@ -37,6 +36,8 @@ struct Edge
 {
 #ifndef SWIG
 	Vertex v1,v2;
+	Rational line_k;
+	bool line_is_vertical;
 	std::set<Polygon*> polys;
 	Cell* side[2];
 #endif
@@ -127,7 +128,20 @@ private:
 	std::set<Vertex> vertices;
 	std::map<VertexPair,Edge> pair2edge;
 	std::map<Vertex,std::set<Edge*> > edgemap;
+
+	/**
+	 * Create a new Cell, and mark the 'side' side of the given edge as belonging
+	 * to the new Cell.
+	 * Then find the next edge of this cell, and mark it also, and move till a full
+	 * circle has been created, marking all edges belonging to this Cell.
+	 */
 	void mark_left(Edge* edge);
+
+	/**
+	 * Given 'inedge' as an incoming edge of vertex 'v', find the next edge leading
+	 * out of v.
+	 */
+	Edge* get_out_edge_from_in_edge(Vertex v,Edge* inedge)
 
 
 

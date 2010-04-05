@@ -44,7 +44,8 @@ public:
 	}
 	Line2 reversed() const;
 
-
+	bool is_vertical() const;
+	Rational get_k() const;
 	Line2();
 	Line2(const Vertex& v1,const Vertex& v2);
 	Line2(const Vertex& v1,const Vertex& v2,
