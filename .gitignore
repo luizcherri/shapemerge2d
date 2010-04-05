@@ -1,0 +1,7 @@
+*.so
+*.os
+*.o
+*.pyc
+*~
+*wrap.cc
+*wrap.h

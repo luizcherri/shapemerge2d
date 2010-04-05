@@ -1,0 +1,148 @@
+#ifndef BOOLEAN_OP_H_INCLUDED
+#define BOOLEAN_OP_H_INCLUDED
+
+#ifndef SWIG
+struct SortAlongLine
+{
+	Vertex lstart;
+	SortAlongLine(const Line2& pl) : lstart(pl.get_v1())
+	{
+	}
+	bool operator()(const Vertex& a,const Vertex& b) const
+	{
+		int ta=lstart.taxidist(a);
+		int tb=lstart.taxidist(b);
+		return ta<tb;
+	}
+};
+#endif
+
+struct Cell
+{
+#ifndef SWIG
+	std::set<Edge*> edges;
+	std::set<Polygon*> cover;
+	std::map<Cell*,std::set<Edge*> > neighbors;
+#endif
+
+	///Calculate the approximate center point of the
+	///cell. This can only be used for heuristics,
+	///since the center point is not really well-defined.
+	///However, the calculation is at least deterministic.
+	Vertex approx_center() const;
+	Vertex leftmost_vertex() const;
+
+};
+struct Edge
+{
+#ifndef SWIG
+	Vertex v1,v2;
+	std::set<Polygon*> polys;
+	Cell* side[2];
+#endif
+	Edge()
+	{
+		side[0]=NULL;
+		side[1]=NULL;
+	}
+};
+struct VertexPair
+{
+#ifndef SWIG
+	Vertex v1,v2;
+#endif
+	Vertex get_v1()const{return v1;}
+	Vertex get_v2()const{return v2;}
+	VertexPair(const Vertex& pv1,const Vertex& pv2) : v1(pv1),v2(pv2){}
+	bool operator<(const VertexPair& o)
+	{
+		if (v1<o.v1) return true;
+		if (o.v1<v1) return false;
+		return v2<o.v2;
+	}
+};
+class BooleanOp
+{
+public:
+	BooleanOp();
+	/**
+	 * Extract all lines from the two shapes that we are to
+	 * do a boolean operation upon. Each line is put into
+	 * a vector, all_lines. Each polygon is put into the
+	 * tagmap vector. The index into this vector is the 'tag'.
+	 * The tag is stored with the lines, helping to keep
+	 * track of which polygon the line belongs to.
+	 * Note!
+	 * FIXME: This tag-business isn't really used like it should, and
+	 * might be unnecessary! Maybe fix sometime!
+	 */
+	void step1_add_lines(Shape* shape_a,Shape* shape_b);
+	/**
+	 * Find all intersections between the lines. This finds
+	 * all vertexes in the graph of Vertexes and Edges that
+	 * is to be created. vmap maps from vertex to lines,
+	 * lmap from line to vertices. vertices is simply
+	 * the set of all vertices.
+	 */
+	void step2_intersect_lines();
+	/**
+	 * Create the 'edge' objects. Each edge has two
+	 * vertices. It is built from all the lines which
+	 * go between these vertices.
+	 * pair2edge = map from pair of vertices to edge
+	 * edgemap = map from vertex to all edges passing through it.
+	 */
+	void step3_create_edges();
+	/**
+	 * Go through all edges, and iterate around the holes
+	 * and outlines of the graph. Follow the left side of an edge
+	 * to the next vertex, there take the leftmost edge, and follow
+	 * it along its left side to the next vertex, and so on, until
+	 * you get back to the starting point. The thing you have encircled
+	 * is a _cell_.
+	 */
+	void step4_create_cells();
+	/**
+	 * Eliminate vertices which are only visited by a single edge.
+	 * Eliminate all edges which go to such a vertex.
+	 * (Lines are kept, since we don't use them after this step anyway)
+	 */
+	void step5_eliminate_deadends();
+	/**
+	 * Determine which polygons cover each cell.
+	 */
+	void step6_determine_cell_cover();
+
+	Vertex leftmost_vertex() const;
+
+	Shape addition();
+
+	void remove_edge(Line2* line);
+private:
+
+	std::vector<Polygon*> tagmap;
+	std::vector<Line2> all_lines; //also contains lines which were subsequently identified as dead-ends and removed
+	std::map<Vertex,std::set<Line2*> > vmap;
+	std::map<Line2*,std::set<Vertex> > lmap;
+	std::set<Vertex> vertices;
+	std::map<VertexPair,Edge> pair2edge;
+	std::map<Vertex,std::set<Edge*> > edgemap;
+	void mark_left(Edge* edge);
+
+
+
+};
+
+
+Shape boolean_add(const Shape& a,const Shape& b);
+
+
+
+
+
+
+
+
+
+
+#endif
