@@ -51,9 +51,15 @@ public:
 	Line2(const Vertex& v1,const Vertex& v2,
 			const Rational& k,const Rational& m
 			);
-
+	bool operator==(const Line2& o);
+	bool operator!=(const Line2& o);
+	bool operator<(const Line2& o);
 	void add_tag(int tag);
 	void add_tags(const std::set<int>& newtags);
+	int __hash__() const
+	{
+		return v1.__hash__()+17*v2.__hash__();
+	}
 
 	int taxilen() const
 	{

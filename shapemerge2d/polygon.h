@@ -23,6 +23,7 @@ namespace shapemerge2d
 	 * There is a line between the last vertex and the first vertex,
 	 * guaranteeing that all polygons are always closed.
 	 */
+	class Shape;
 	class Polygon
 	{
 	public:
@@ -32,30 +33,33 @@ namespace shapemerge2d
 			SOLID
 		};
 		/**
-		 * If the given vertex sequence would give rise to a polygon
-		 * with overlapping lines, extra vertices need to be introduced
-		 * to normalize the polygon.
+		 * Caller must ensure that polygon edges do not cross each other.
+		 * Edges may coincide, but not actually cross. (Consider a
+		 * very very flat triangle, then segment each of the three edges
+		 * into many small edges. Some of these small edges will coincide.)
 		 */
-		Polygon(const std::vector<Vertex>& vs,Kind pkind,Shape* pshape=NULL) :
-			vertices(vs),
+		Polygon(const std::vector<Vertex>& vs,Kind pkind=SOLID,Shape* pshape=NULL) :
 			kind(pkind),
 			shape(pshape)
 		{
+			if (vs.size()<3) throw std::runtime_error("A polygon must have at least 3 vertices");
+			for(int i=0;i<(int)vs.size();++i)
+			{
+				int j=i+1;
+				if (j==(int)vs.size()) j=0;
+				lines.push_back(Line2(vs[i],vs[j]));
+			}
 		}
-		const std::vector<Line>& get_lines();
+		const std::vector<Line2>& get_lines()const;
 		/**
 		 * Return the vertex with the lowest x coordinate, and if several have
 		 * the same, the one with the lowest y coodinate.
 		 */
 		Vertex lower_left_vertex() const;
 	private:
-		/**
-		 *All polygons should be counterclockwise.
-		 */
-		void assert_direction();
 		Kind kind;
 		Shape* shape;
-		std::vector<Line2> vertices;
+		std::vector<Line2> lines;
 
 	};
 

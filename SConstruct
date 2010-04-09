@@ -5,7 +5,7 @@ coreenv = Environment(
     CPPPATH=[distutils.sysconfig.get_python_inc(),
     	os.getcwd()],
     SHLIBPREFIX="",
-    CCFLAGS=['-Wall','-Werror','-ggdb']
+    CCFLAGS=['-Wall','-Werror','-ggdb','-std=c++0x']
     )
 
 swig_env = coreenv.Clone()
@@ -19,5 +19,8 @@ coreenv.SharedLibrary('_pyshapemerge2d.so', [
     "shapemerge2d/line2.cpp",
     "shapemerge2d/vertex.cpp",
     "shapemerge2d/vector.cpp",
+    "shapemerge2d/polygon.cpp",
+    "shapemerge2d/shape.cpp",
+    "shapemerge2d/boolean_op.cpp"
     ])
     

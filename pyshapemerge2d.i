@@ -10,6 +10,9 @@
 #include "shapemerge2d/vertex.h" 
 #include "shapemerge2d/vector.h" 
 #include "shapemerge2d/line2.h" 
+#include "shapemerge2d/polygon.h" 
+#include "shapemerge2d/shape.h" 
+#include "shapemerge2d/boolean_op.h" 
 using namespace shapemerge2d;
 %}
 
@@ -19,7 +22,11 @@ using namespace shapemerge2d;
 %include "shapemerge2d/vertex.h" 
 %include "shapemerge2d/vector.h" 
 %include "shapemerge2d/line2.h" 
+%include "shapemerge2d/polygon.h" 
+%include "shapemerge2d/shape.h" 
+%include "shapemerge2d/boolean_op.h" 
 
+%rename(__eq__) Line2::operator==;
 %rename(__eq__) Vector::operator==;
 %rename(__eq__) Vertex::operator==;
 %rename(__add__) Vector::operator+;
@@ -29,6 +36,8 @@ using namespace shapemerge2d;
 namespace std {
    %template(lvector) vector<shapemerge2d::Line2>;
    %template(vvector) vector<shapemerge2d::Vertex>;
+   %template(evector) vector<shapemerge2d::Edge>;
+   %template(cvector) vector<shapemerge2d::Cell>;
 }
 
 

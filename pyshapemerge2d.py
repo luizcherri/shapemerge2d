@@ -117,6 +117,7 @@ class Vertex(_object):
     def taxidist(self, *args): return _pyshapemerge2d.Vertex_taxidist(self, *args)
     def __sub__(self, *args): return _pyshapemerge2d.Vertex___sub__(self, *args)
     def __eq__(self, *args): return _pyshapemerge2d.Vertex___eq__(self, *args)
+    def __ne__(self, *args): return _pyshapemerge2d.Vertex___ne__(self, *args)
     def __lt__(self, *args): return _pyshapemerge2d.Vertex___lt__(self, *args)
     def __hash__(self): return _pyshapemerge2d.Vertex___hash__(self)
     def __repr__(self): return _pyshapemerge2d.Vertex___repr__(self)
@@ -182,12 +183,18 @@ class Line2(_object):
     def get_tags(self): return _pyshapemerge2d.Line2_get_tags(self)
     def __repr__(self): return _pyshapemerge2d.Line2___repr__(self)
     def reversed(self): return _pyshapemerge2d.Line2_reversed(self)
+    def is_vertical(self): return _pyshapemerge2d.Line2_is_vertical(self)
+    def get_k(self): return _pyshapemerge2d.Line2_get_k(self)
     def __init__(self, *args): 
         this = _pyshapemerge2d.new_Line2(*args)
         try: self.this.append(this)
         except: self.this = this
+    def __eq__(self, *args): return _pyshapemerge2d.Line2___eq__(self, *args)
+    def __ne__(self, *args): return _pyshapemerge2d.Line2___ne__(self, *args)
+    def __lt__(self, *args): return _pyshapemerge2d.Line2___lt__(self, *args)
     def add_tag(self, *args): return _pyshapemerge2d.Line2_add_tag(self, *args)
     def add_tags(self, *args): return _pyshapemerge2d.Line2_add_tags(self, *args)
+    def __hash__(self): return _pyshapemerge2d.Line2___hash__(self)
     def taxilen(self): return _pyshapemerge2d.Line2_taxilen(self)
     def slow_all_vertices(self): return _pyshapemerge2d.Line2_slow_all_vertices(self)
     def dbg_point_on_line(self, *args): return _pyshapemerge2d.Line2_dbg_point_on_line(self, *args)
@@ -207,6 +214,121 @@ class Line2(_object):
     __del__ = lambda self : None;
 Line2_swigregister = _pyshapemerge2d.Line2_swigregister
 Line2_swigregister(Line2)
+
+class Polygon(_object):
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, Polygon, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, Polygon, name)
+    __repr__ = _swig_repr
+    HOLE = _pyshapemerge2d.Polygon_HOLE
+    SOLID = _pyshapemerge2d.Polygon_SOLID
+    def __init__(self, *args): 
+        this = _pyshapemerge2d.new_Polygon(*args)
+        try: self.this.append(this)
+        except: self.this = this
+    def get_lines(self): return _pyshapemerge2d.Polygon_get_lines(self)
+    def lower_left_vertex(self): return _pyshapemerge2d.Polygon_lower_left_vertex(self)
+    __swig_destroy__ = _pyshapemerge2d.delete_Polygon
+    __del__ = lambda self : None;
+Polygon_swigregister = _pyshapemerge2d.Polygon_swigregister
+Polygon_swigregister(Polygon)
+
+class Shape(_object):
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, Shape, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, Shape, name)
+    __repr__ = _swig_repr
+    def get_this(self): return _pyshapemerge2d.Shape_get_this(self)
+    def get_polys(self): return _pyshapemerge2d.Shape_get_polys(self)
+    def __init__(self, *args): 
+        this = _pyshapemerge2d.new_Shape(*args)
+        try: self.this.append(this)
+        except: self.this = this
+    __swig_destroy__ = _pyshapemerge2d.delete_Shape
+    __del__ = lambda self : None;
+Shape_swigregister = _pyshapemerge2d.Shape_swigregister
+Shape_swigregister(Shape)
+
+class Cell(_object):
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, Cell, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, Cell, name)
+    __repr__ = _swig_repr
+    def dbg_get_edges(self): return _pyshapemerge2d.Cell_dbg_get_edges(self)
+    def __init__(self): 
+        this = _pyshapemerge2d.new_Cell()
+        try: self.this.append(this)
+        except: self.this = this
+    __swig_destroy__ = _pyshapemerge2d.delete_Cell
+    __del__ = lambda self : None;
+Cell_swigregister = _pyshapemerge2d.Cell_swigregister
+Cell_swigregister(Cell)
+
+class Edge(_object):
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, Edge, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, Edge, name)
+    __repr__ = _swig_repr
+    def get_k_approx(self): return _pyshapemerge2d.Edge_get_k_approx(self)
+    def get_is_vertical(self): return _pyshapemerge2d.Edge_get_is_vertical(self)
+    def get_v1(self): return _pyshapemerge2d.Edge_get_v1(self)
+    def get_v2(self): return _pyshapemerge2d.Edge_get_v2(self)
+    def get_cell(self, *args): return _pyshapemerge2d.Edge_get_cell(self, *args)
+    def __init__(self): 
+        this = _pyshapemerge2d.new_Edge()
+        try: self.this.append(this)
+        except: self.this = this
+    __swig_destroy__ = _pyshapemerge2d.delete_Edge
+    __del__ = lambda self : None;
+Edge_swigregister = _pyshapemerge2d.Edge_swigregister
+Edge_swigregister(Edge)
+
+class VertexPair(_object):
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, VertexPair, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, VertexPair, name)
+    __repr__ = _swig_repr
+    def get_v1(self): return _pyshapemerge2d.VertexPair_get_v1(self)
+    def get_v2(self): return _pyshapemerge2d.VertexPair_get_v2(self)
+    def __init__(self, *args): 
+        this = _pyshapemerge2d.new_VertexPair(*args)
+        try: self.this.append(this)
+        except: self.this = this
+    def __lt__(self, *args): return _pyshapemerge2d.VertexPair___lt__(self, *args)
+    __swig_destroy__ = _pyshapemerge2d.delete_VertexPair
+    __del__ = lambda self : None;
+VertexPair_swigregister = _pyshapemerge2d.VertexPair_swigregister
+VertexPair_swigregister(VertexPair)
+
+class BooleanOp(_object):
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, BooleanOp, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, BooleanOp, name)
+    __repr__ = _swig_repr
+    def __init__(self): 
+        this = _pyshapemerge2d.new_BooleanOp()
+        try: self.this.append(this)
+        except: self.this = this
+    def step1_add_lines(self, *args): return _pyshapemerge2d.BooleanOp_step1_add_lines(self, *args)
+    def step2_intersect_lines(self): return _pyshapemerge2d.BooleanOp_step2_intersect_lines(self)
+    def dbg_step2_get_split_lines(self): return _pyshapemerge2d.BooleanOp_dbg_step2_get_split_lines(self)
+    def step3_create_edges(self): return _pyshapemerge2d.BooleanOp_step3_create_edges(self)
+    def dbg_step3_and_4_get_edges(self): return _pyshapemerge2d.BooleanOp_dbg_step3_and_4_get_edges(self)
+    def step4_eliminate_deadends(self): return _pyshapemerge2d.BooleanOp_step4_eliminate_deadends(self)
+    def step5_create_cells(self): return _pyshapemerge2d.BooleanOp_step5_create_cells(self)
+    def dbg_step5_sort_edges(self, *args): return _pyshapemerge2d.BooleanOp_dbg_step5_sort_edges(self, *args)
+    def dbg_step5_get_cells(self): return _pyshapemerge2d.BooleanOp_dbg_step5_get_cells(self)
+    def step6_determine_cell_cover(self): return _pyshapemerge2d.BooleanOp_step6_determine_cell_cover(self)
+    __swig_destroy__ = _pyshapemerge2d.delete_BooleanOp
+    __del__ = lambda self : None;
+BooleanOp_swigregister = _pyshapemerge2d.BooleanOp_swigregister
+BooleanOp_swigregister(BooleanOp)
 
 class lvector(_object):
     __swig_setmethods__ = {}
@@ -301,6 +423,100 @@ class vvector(_object):
     __del__ = lambda self : None;
 vvector_swigregister = _pyshapemerge2d.vvector_swigregister
 vvector_swigregister(vvector)
+
+class evector(_object):
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, evector, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, evector, name)
+    __repr__ = _swig_repr
+    def iterator(self): return _pyshapemerge2d.evector_iterator(self)
+    def __iter__(self): return self.iterator()
+    def __nonzero__(self): return _pyshapemerge2d.evector___nonzero__(self)
+    def __bool__(self): return _pyshapemerge2d.evector___bool__(self)
+    def __len__(self): return _pyshapemerge2d.evector___len__(self)
+    def pop(self): return _pyshapemerge2d.evector_pop(self)
+    def __getslice__(self, *args): return _pyshapemerge2d.evector___getslice__(self, *args)
+    def __setslice__(self, *args): return _pyshapemerge2d.evector___setslice__(self, *args)
+    def __delslice__(self, *args): return _pyshapemerge2d.evector___delslice__(self, *args)
+    def __delitem__(self, *args): return _pyshapemerge2d.evector___delitem__(self, *args)
+    def __getitem__(self, *args): return _pyshapemerge2d.evector___getitem__(self, *args)
+    def __setitem__(self, *args): return _pyshapemerge2d.evector___setitem__(self, *args)
+    def append(self, *args): return _pyshapemerge2d.evector_append(self, *args)
+    def empty(self): return _pyshapemerge2d.evector_empty(self)
+    def size(self): return _pyshapemerge2d.evector_size(self)
+    def clear(self): return _pyshapemerge2d.evector_clear(self)
+    def swap(self, *args): return _pyshapemerge2d.evector_swap(self, *args)
+    def get_allocator(self): return _pyshapemerge2d.evector_get_allocator(self)
+    def begin(self): return _pyshapemerge2d.evector_begin(self)
+    def end(self): return _pyshapemerge2d.evector_end(self)
+    def rbegin(self): return _pyshapemerge2d.evector_rbegin(self)
+    def rend(self): return _pyshapemerge2d.evector_rend(self)
+    def pop_back(self): return _pyshapemerge2d.evector_pop_back(self)
+    def erase(self, *args): return _pyshapemerge2d.evector_erase(self, *args)
+    def __init__(self, *args): 
+        this = _pyshapemerge2d.new_evector(*args)
+        try: self.this.append(this)
+        except: self.this = this
+    def push_back(self, *args): return _pyshapemerge2d.evector_push_back(self, *args)
+    def front(self): return _pyshapemerge2d.evector_front(self)
+    def back(self): return _pyshapemerge2d.evector_back(self)
+    def assign(self, *args): return _pyshapemerge2d.evector_assign(self, *args)
+    def resize(self, *args): return _pyshapemerge2d.evector_resize(self, *args)
+    def insert(self, *args): return _pyshapemerge2d.evector_insert(self, *args)
+    def reserve(self, *args): return _pyshapemerge2d.evector_reserve(self, *args)
+    def capacity(self): return _pyshapemerge2d.evector_capacity(self)
+    __swig_destroy__ = _pyshapemerge2d.delete_evector
+    __del__ = lambda self : None;
+evector_swigregister = _pyshapemerge2d.evector_swigregister
+evector_swigregister(evector)
+
+class cvector(_object):
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, cvector, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, cvector, name)
+    __repr__ = _swig_repr
+    def iterator(self): return _pyshapemerge2d.cvector_iterator(self)
+    def __iter__(self): return self.iterator()
+    def __nonzero__(self): return _pyshapemerge2d.cvector___nonzero__(self)
+    def __bool__(self): return _pyshapemerge2d.cvector___bool__(self)
+    def __len__(self): return _pyshapemerge2d.cvector___len__(self)
+    def pop(self): return _pyshapemerge2d.cvector_pop(self)
+    def __getslice__(self, *args): return _pyshapemerge2d.cvector___getslice__(self, *args)
+    def __setslice__(self, *args): return _pyshapemerge2d.cvector___setslice__(self, *args)
+    def __delslice__(self, *args): return _pyshapemerge2d.cvector___delslice__(self, *args)
+    def __delitem__(self, *args): return _pyshapemerge2d.cvector___delitem__(self, *args)
+    def __getitem__(self, *args): return _pyshapemerge2d.cvector___getitem__(self, *args)
+    def __setitem__(self, *args): return _pyshapemerge2d.cvector___setitem__(self, *args)
+    def append(self, *args): return _pyshapemerge2d.cvector_append(self, *args)
+    def empty(self): return _pyshapemerge2d.cvector_empty(self)
+    def size(self): return _pyshapemerge2d.cvector_size(self)
+    def clear(self): return _pyshapemerge2d.cvector_clear(self)
+    def swap(self, *args): return _pyshapemerge2d.cvector_swap(self, *args)
+    def get_allocator(self): return _pyshapemerge2d.cvector_get_allocator(self)
+    def begin(self): return _pyshapemerge2d.cvector_begin(self)
+    def end(self): return _pyshapemerge2d.cvector_end(self)
+    def rbegin(self): return _pyshapemerge2d.cvector_rbegin(self)
+    def rend(self): return _pyshapemerge2d.cvector_rend(self)
+    def pop_back(self): return _pyshapemerge2d.cvector_pop_back(self)
+    def erase(self, *args): return _pyshapemerge2d.cvector_erase(self, *args)
+    def __init__(self, *args): 
+        this = _pyshapemerge2d.new_cvector(*args)
+        try: self.this.append(this)
+        except: self.this = this
+    def push_back(self, *args): return _pyshapemerge2d.cvector_push_back(self, *args)
+    def front(self): return _pyshapemerge2d.cvector_front(self)
+    def back(self): return _pyshapemerge2d.cvector_back(self)
+    def assign(self, *args): return _pyshapemerge2d.cvector_assign(self, *args)
+    def resize(self, *args): return _pyshapemerge2d.cvector_resize(self, *args)
+    def insert(self, *args): return _pyshapemerge2d.cvector_insert(self, *args)
+    def reserve(self, *args): return _pyshapemerge2d.cvector_reserve(self, *args)
+    def capacity(self): return _pyshapemerge2d.cvector_capacity(self)
+    __swig_destroy__ = _pyshapemerge2d.delete_cvector
+    __del__ = lambda self : None;
+cvector_swigregister = _pyshapemerge2d.cvector_swigregister
+cvector_swigregister(cvector)
 
 
 

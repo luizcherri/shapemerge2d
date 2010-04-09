@@ -9,6 +9,10 @@ namespace shapemerge2d
 	{
 		return x==o.x && y==o.y;
 	}
+	bool Vertex::operator!=(const Vertex& o) const
+	{
+		return x!=o.x || y!=o.y;
+	}
 	Vertex::Vertex(int px,int py) : x(px),y(py)
 	{
 	}

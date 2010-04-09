@@ -25,6 +25,7 @@ namespace shapemerge2d
 		}
 		Vector operator-(const Vertex& o) const;
 		bool operator==(const Vertex& o) const;
+		bool operator!=(const Vertex& o) const;
 		bool operator<(const Vertex& o) const
 		{
 			if (x<o.x) return true;

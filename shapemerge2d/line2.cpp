@@ -20,6 +20,23 @@ void Line2::add_tag(int tag)
 {
 	tags.insert(tag);
 }
+bool Line2::operator==(const Line2& o)
+{
+	return v1==o.v1 && v2==o.v2;
+}
+bool Line2::operator!=(const Line2& o)
+{
+	return !(v1==o.v1 && v2==o.v2);
+}
+bool Line2::operator<(const Line2& o)
+{
+	if (v1<o.v1)
+		return true;
+	if (o.v1<v1)
+		return false;
+	return v2<o.v2;
+}
+
 void Line2::add_tags(const std::set<int>& newtags)
 {
 	std::set<int>::iterator it = newtags.begin();

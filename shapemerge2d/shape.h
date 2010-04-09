@@ -1,7 +1,8 @@
 #ifndef SHAPE_MERGE_SHAPE_INCLUDED
 #define SHAPE_MERGE_SHAPE_INCLUDED
 #include <vector>
-
+#include <string>
+#include "polygon.h"
 
 namespace shapemerge2d
 {
@@ -27,12 +28,12 @@ namespace shapemerge2d
 	class Shape
 	{
 		std::string name;
-		std::vector<Polygon> polys;
 	public:
+		Shape* get_this(){return this;}
 		const std::vector<Polygon>& get_polys();
+		Shape();
 		Shape(const std::string& name,const Polygon poly);
 		Shape(const std::string& name,const std::vector<Polygon>& poly);
-		Shape boolean_union(const Shape& o);
 
 	private:
 		std::vector<Polygon> polys;
