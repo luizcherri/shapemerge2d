@@ -56,6 +56,7 @@ namespace shapemerge2d
 		 * the same, the one with the lowest y coodinate.
 		 */
 		Vertex lower_left_vertex() const;
+		const Shape* get_shape()const{return shape;}
 	private:
 		Kind kind;
 		Shape* shape;

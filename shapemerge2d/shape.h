@@ -34,7 +34,7 @@ namespace shapemerge2d
 		Shape();
 		Shape(const std::string& name,const Polygon poly);
 		Shape(const std::string& name,const std::vector<Polygon>& poly);
-
+		const std::string& get_name()const{return name;}
 	private:
 		std::vector<Polygon> polys;
 	};

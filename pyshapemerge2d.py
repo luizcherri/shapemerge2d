@@ -229,6 +229,7 @@ class Polygon(_object):
         except: self.this = this
     def get_lines(self): return _pyshapemerge2d.Polygon_get_lines(self)
     def lower_left_vertex(self): return _pyshapemerge2d.Polygon_lower_left_vertex(self)
+    def get_shape(self): return _pyshapemerge2d.Polygon_get_shape(self)
     __swig_destroy__ = _pyshapemerge2d.delete_Polygon
     __del__ = lambda self : None;
 Polygon_swigregister = _pyshapemerge2d.Polygon_swigregister
@@ -246,6 +247,7 @@ class Shape(_object):
         this = _pyshapemerge2d.new_Shape(*args)
         try: self.this.append(this)
         except: self.this = this
+    def get_name(self): return _pyshapemerge2d.Shape_get_name(self)
     __swig_destroy__ = _pyshapemerge2d.delete_Shape
     __del__ = lambda self : None;
 Shape_swigregister = _pyshapemerge2d.Shape_swigregister
@@ -258,6 +260,8 @@ class Cell(_object):
     __getattr__ = lambda self, name: _swig_getattr(self, Cell, name)
     __repr__ = _swig_repr
     def dbg_get_edges(self): return _pyshapemerge2d.Cell_dbg_get_edges(self)
+    def get_shapes(self): return _pyshapemerge2d.Cell_get_shapes(self)
+    def get_neighbors(self): return _pyshapemerge2d.Cell_get_neighbors(self)
     def __init__(self): 
         this = _pyshapemerge2d.new_Cell()
         try: self.this.append(this)

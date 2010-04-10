@@ -46,6 +46,8 @@ struct Cell
 	//Vertex approx_center() const;
 	//Vertex leftmost_vertex() const;
 	std::vector<Edge> dbg_get_edges();
+	std::vector<std::string> get_shapes();
+	std::vector<Cell> get_neighbors();
 };
 struct Edge
 {

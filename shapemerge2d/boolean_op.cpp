@@ -306,6 +306,7 @@ void BooleanOp::step6_determine_cell_cover()
 	Vertex leftmost=*vertices.begin();
 	BOOST_FOREACH(Vertex v,vertices)
 	{
+		printf("Vertex: %s\n",v.__repr__().c_str());
 		if (v.x<leftmost.x) leftmost=v;
 		else if (v.x==leftmost.x && v.y<leftmost.y)
 			leftmost=v;
@@ -337,6 +338,9 @@ void BooleanOp::step6_determine_cell_cover()
 }
 void BooleanOp::recurse_determine_cover(Cell* curcell,std::set<const Polygon*> curpolys,std::set<Cell*>& visited)
 {
+	if (visited.find(curcell)!=visited.end())
+		return; //already visited
+	visited.insert(curcell);
 	curcell->cover=curpolys;
 	BOOST_FOREACH(Edge* border,curcell->edges)
 	{
@@ -351,7 +355,7 @@ void BooleanOp::recurse_determine_cover(Cell* curcell,std::set<const Polygon*> c
 			othercell=border->side[0];
 		}
 		if (visited.find(othercell)!=visited.end())
-			continue; //already visited
+			continue; //short circuit optimization, primary check is at start of function.
 		std::set<const Polygon*> adjusted=curpolys;
 		BOOST_FOREACH(const Polygon* poly,border->polys)
 		{
@@ -364,8 +368,8 @@ void BooleanOp::recurse_determine_cover(Cell* curcell,std::set<const Polygon*> c
 			{
 				adjusted.erase(it);
 			}
-			recurse_determine_cover(othercell,adjusted,visited);
 		}
+		recurse_determine_cover(othercell,adjusted,visited);
 	}
 }
 void BooleanOp::step1_add_lines(Shape* shape_a,Shape* shape_b)
@@ -417,6 +421,8 @@ void BooleanOp::step2_intersect_lines()
 		auto& lmapcont=lmap[&*ita];
 		lmapcont.insert(start);
 		lmapcont.insert(end);
+		vertices.insert(start);
+		vertices.insert(end);
 		assert(lmapcont.size()>=2);
 		//vmap[start].insert(&*ita);
 		//vmap[end].insert(&*ita);
@@ -433,6 +439,30 @@ std::vector<Edge> Cell::dbg_get_edges()
 	BOOST_FOREACH(auto e,edges)
 		out.push_back(*e);
 	return out;
+}
+std::vector<std::string> Cell::get_shapes()
+{
+	std::set<std::string> shapenames;
+	BOOST_FOREACH(auto poly,cover)
+	{
+		const Shape* shp=poly->get_shape();
+		shapenames.insert(shp->get_name());
+	}
+	std::vector<std::string> shapev;
+	BOOST_FOREACH(auto s,shapenames)
+		shapev.push_back(s);
+	return shapev;
+}
+
+std::vector<Cell> Cell::get_neighbors()
+{
+	std::vector<Cell> cells;
+	BOOST_FOREACH(auto n,neighbors)
+	{
+		assert(n.first);
+		cells.push_back(*n.first);
+	}
+	return cells;
 }
 
 std::vector<Edge> BooleanOp::dbg_step3_and_4_get_edges()
