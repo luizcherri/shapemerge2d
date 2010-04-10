@@ -1,4 +1,4 @@
-from pyshapemerge2d import Line2,Vertex,Vector,BooleanOp,Polygon,vvector,Shape,lvector
+from pyshapemerge2d import Line2,Vertex,Vector,BooleanOp,Polygon,vvector,Shape,lvector,BooleanOrStrategy
 
 from visualize import draw_things
 import visualize
@@ -186,5 +186,53 @@ def test_add_lines():
         edgelines=frozenset(NondirLine(edge.get_v1(),edge.get_v2()) for edge in edges)
         shapes=list(cell.get_shapes())
         realcellname=facit_cells[edgelines]
+        facit_cell_shapes={
+            'lower_left':('shape_a',),
+            'center':('shape_a','shape_b'),
+            'upper_right':('shape_b',),
+            'outline':()
+            }
+        print "Facit:",facit_cell_shapes[realcellname]
+        print "Actual:",tuple(shapes)
+        assert facit_cell_shapes[realcellname]==tuple(shapes)
+            
         print "Cell: %s, shapes: %s"%(realcellname,", ".join(shapes))
+    
+    bas=BooleanOrStrategy()
+    bo.step7_classify_cells(bas)
+    cells=list(bo.dbg_step5_get_cells())
+    for cell in cells:
+        edges=cell.dbg_get_edges()
+        edgelines=frozenset(NondirLine(edge.get_v1(),edge.get_v2()) for edge in edges)
+        shapes=list(cell.get_shapes())
+        realcellname=facit_cells[edgelines]
+        facit_cell_kind={
+            'lower_left':'SOLID',
+            'center':'SOLID',
+            'upper_right':'SOLID',
+            'outline':'HOLE'
+            }
+        print "Cell %s classification: %s"%(realcellname,cell.get_classification())
+        assert cell.get_classification()==facit_cell_kind[realcellname]
         
+    bo.step8_merge_cells()
+    cells=list(bo.dbg_step5_get_cells())
+    def lookup_cellname(cell):
+        edges=cell.dbg_get_edges()
+        edgelines=frozenset(NondirLine(edge.get_v1(),edge.get_v2()) for edge in edges)
+        shapes=list(cell.get_shapes())
+        realcellname=facit_cells[edgelines]
+        return realcellname
+        
+    for cell in cells:
+        facit_cell_merged={
+            'lower_left':0,
+            'center':0,
+            'upper_right':0,
+            'outline':1
+            }
+        realcellname=lookup_cellname(cell)
+        print "Cell %s merged_poly: %s, class: %s"%(realcellname,cell.get_merged_poly(),cell.get_classification())
+        print "%s: Neighbors:"%realcellname," ".join(lookup_cellname(ce) for ce in cell.get_neighbors())
+        assert cell.get_merged_poly()==facit_cell_merged[realcellname]
+            

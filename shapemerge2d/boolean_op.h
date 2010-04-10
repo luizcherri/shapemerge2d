@@ -25,6 +25,14 @@ struct SortAlongLine
 	}
 };
 #endif
+enum BooleanUpResult
+{
+	NONE, //generate no polygon for this (a hole bordering the void)
+	HOLE,
+	SOLID,
+	UNCLASSIFIED
+};
+
 struct Edge;
 struct Cell
 {
@@ -37,18 +45,25 @@ struct Cell
 	 * to this cell.
 	 */
 	std::map<Cell*,std::set<Edge*> > neighbors;
-#endif
+	BooleanUpResult classification;
+	int merged_poly;
 
+#endif
+	Cell(){classification=UNCLASSIFIED;merged_poly=-1;}
 	///Calculate the approximate center point of the
 	///cell. This can only be used for heuristics,
 	///since the center point is not really well-defined.
 	///However, the calculation is at least deterministic.
 	//Vertex approx_center() const;
 	//Vertex leftmost_vertex() const;
+	int get_merged_poly(){return merged_poly;}
 	std::vector<Edge> dbg_get_edges();
 	std::vector<std::string> get_shapes();
 	std::vector<Cell> get_neighbors();
+	std::string get_classification();
+	std::string __repr__() const;
 };
+
 struct Edge
 {
 #ifndef SWIG
@@ -69,6 +84,7 @@ struct Edge
 	bool get_is_vertical()const{return line_is_vertical;}
 	Vertex get_v1()const{return v1;}
 	Vertex get_v2()const{return v2;}
+	Vertex get_leftmost()const;
 	Cell* get_cell(int s)
 	{
 		if (s<0 || s>=2) throw std::runtime_error("Bad side");
@@ -96,6 +112,15 @@ struct VertexPair
 		if (o.v1<v1) return false;
 		return v2<o.v2;
 	}
+};
+struct BooleanOpStrategy
+{
+	virtual BooleanUpResult evaluate(const Cell& cell)=0;
+};
+struct BooleanOrStrategy : public BooleanOpStrategy
+{
+	virtual BooleanUpResult evaluate(const Cell& cell);
+
 };
 class BooleanOp
 {
@@ -158,6 +183,19 @@ public:
 
 	//Vertex leftmost_vertex() const;
 
+	void step7_classify_cells(BooleanOpStrategy* strat);
+
+	/**
+	 * Merge cells with the same classification
+	 */
+	void step8_merge_cells();
+
+	/**
+	 *
+	 */
+	void step9_calc_result();
+	Shape* step9_get_result();
+
 public:
 	//Shape addition();
 private:
@@ -173,7 +211,9 @@ private:
 	std::set<Vertex> vertices;
 	std::map<VertexPair,Edge> pair2edge;
 	std::map<Vertex,std::set<Edge*> > edgemap;
-
+	std::vector<Cell*> cells;
+	int num_merged_polys;
+	Shape* result;
 	/**
 	 * Create a new Cell, and mark the 'side' side of the given edge as belonging
 	 * to the new Cell.
@@ -189,6 +229,8 @@ private:
 	Edge* get_out_edge_from_in_edge(Vertex v,Edge* inedge,int side);
 
 	void recurse_determine_cover(Cell* curcell,std::set<const Polygon*> curpolys,std::set<Cell*>& visited);
+
+
 
 
 };

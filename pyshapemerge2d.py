@@ -254,19 +254,25 @@ class Shape(_object):
 Shape_swigregister = _pyshapemerge2d.Shape_swigregister
 Shape_swigregister(Shape)
 
+NONE = _pyshapemerge2d.NONE
+HOLE = _pyshapemerge2d.HOLE
+SOLID = _pyshapemerge2d.SOLID
+UNCLASSIFIED = _pyshapemerge2d.UNCLASSIFIED
 class Cell(_object):
     __swig_setmethods__ = {}
     __setattr__ = lambda self, name, value: _swig_setattr(self, Cell, name, value)
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, Cell, name)
-    __repr__ = _swig_repr
-    def dbg_get_edges(self): return _pyshapemerge2d.Cell_dbg_get_edges(self)
-    def get_shapes(self): return _pyshapemerge2d.Cell_get_shapes(self)
-    def get_neighbors(self): return _pyshapemerge2d.Cell_get_neighbors(self)
     def __init__(self): 
         this = _pyshapemerge2d.new_Cell()
         try: self.this.append(this)
         except: self.this = this
+    def get_merged_poly(self): return _pyshapemerge2d.Cell_get_merged_poly(self)
+    def dbg_get_edges(self): return _pyshapemerge2d.Cell_dbg_get_edges(self)
+    def get_shapes(self): return _pyshapemerge2d.Cell_get_shapes(self)
+    def get_neighbors(self): return _pyshapemerge2d.Cell_get_neighbors(self)
+    def get_classification(self): return _pyshapemerge2d.Cell_get_classification(self)
+    def __repr__(self): return _pyshapemerge2d.Cell___repr__(self)
     __swig_destroy__ = _pyshapemerge2d.delete_Cell
     __del__ = lambda self : None;
 Cell_swigregister = _pyshapemerge2d.Cell_swigregister
@@ -310,6 +316,37 @@ class VertexPair(_object):
 VertexPair_swigregister = _pyshapemerge2d.VertexPair_swigregister
 VertexPair_swigregister(VertexPair)
 
+class BooleanOpStrategy(_object):
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, BooleanOpStrategy, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, BooleanOpStrategy, name)
+    def __init__(self, *args, **kwargs): raise AttributeError("No constructor defined - class is abstract")
+    __repr__ = _swig_repr
+    def evaluate(self, *args): return _pyshapemerge2d.BooleanOpStrategy_evaluate(self, *args)
+    __swig_destroy__ = _pyshapemerge2d.delete_BooleanOpStrategy
+    __del__ = lambda self : None;
+BooleanOpStrategy_swigregister = _pyshapemerge2d.BooleanOpStrategy_swigregister
+BooleanOpStrategy_swigregister(BooleanOpStrategy)
+
+class BooleanOrStrategy(BooleanOpStrategy):
+    __swig_setmethods__ = {}
+    for _s in [BooleanOpStrategy]: __swig_setmethods__.update(getattr(_s,'__swig_setmethods__',{}))
+    __setattr__ = lambda self, name, value: _swig_setattr(self, BooleanOrStrategy, name, value)
+    __swig_getmethods__ = {}
+    for _s in [BooleanOpStrategy]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
+    __getattr__ = lambda self, name: _swig_getattr(self, BooleanOrStrategy, name)
+    __repr__ = _swig_repr
+    def evaluate(self, *args): return _pyshapemerge2d.BooleanOrStrategy_evaluate(self, *args)
+    def __init__(self): 
+        this = _pyshapemerge2d.new_BooleanOrStrategy()
+        try: self.this.append(this)
+        except: self.this = this
+    __swig_destroy__ = _pyshapemerge2d.delete_BooleanOrStrategy
+    __del__ = lambda self : None;
+BooleanOrStrategy_swigregister = _pyshapemerge2d.BooleanOrStrategy_swigregister
+BooleanOrStrategy_swigregister(BooleanOrStrategy)
+
 class BooleanOp(_object):
     __swig_setmethods__ = {}
     __setattr__ = lambda self, name, value: _swig_setattr(self, BooleanOp, name, value)
@@ -330,6 +367,8 @@ class BooleanOp(_object):
     def dbg_step5_sort_edges(self, *args): return _pyshapemerge2d.BooleanOp_dbg_step5_sort_edges(self, *args)
     def dbg_step5_get_cells(self): return _pyshapemerge2d.BooleanOp_dbg_step5_get_cells(self)
     def step6_determine_cell_cover(self): return _pyshapemerge2d.BooleanOp_step6_determine_cell_cover(self)
+    def step7_classify_cells(self, *args): return _pyshapemerge2d.BooleanOp_step7_classify_cells(self, *args)
+    def step8_merge_cells(self): return _pyshapemerge2d.BooleanOp_step8_merge_cells(self)
     __swig_destroy__ = _pyshapemerge2d.delete_BooleanOp
     __del__ = lambda self : None;
 BooleanOp_swigregister = _pyshapemerge2d.BooleanOp_swigregister

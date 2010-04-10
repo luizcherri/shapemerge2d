@@ -5,6 +5,8 @@ namespace shapemerge2d
 {
 BooleanOp::BooleanOp()
 {
+	result=NULL;
+	num_merged_polys=0;
 }
 void BooleanOp::mark_side(int side_,Edge* edge_)
 {
@@ -12,6 +14,7 @@ void BooleanOp::mark_side(int side_,Edge* edge_)
 		return; //already marked
 	Edge* curedge=edge_;
 	Cell* cell=new Cell();
+	cells.push_back(cell);
 	Vertex last_cell_end=edge_->v1;
 
 	for(;;)
@@ -110,24 +113,7 @@ struct EdgeSorter
 
 	}
 };
-static void selftest_edge_sorter()
-{
-	{
-		Edge incoming(Vertex(0,0),Vertex(10,0));
-		Edge out1(Vertex(10,0),Vertex(10,10));
-		Edge out2(Vertex(10,0),Vertex(8,10));
-		std::vector<Edge*> vec;
-		vec.push_back(&out1);
-		vec.push_back(&out2);
-		EdgeSorter es(Vertex(10,0),&incoming,0);
-		std::sort(vec.begin(),vec.end(),es);
-		//Verify that out2<out1
-		assert(vec[0]->v1==out2.v1);
-		assert(vec[1]->v1==out1.v1);
-		assert(vec[0]->v2==out2.v2);
-		assert(vec[1]->v2==out1.v2);
-	}
-}
+
 std::vector<Line2> BooleanOp::dbg_step5_sort_edges(Vertex v,Line2 incoming,std::vector<Line2> tosort,int side)
 {
 	std::vector<Edge> e;
@@ -196,15 +182,6 @@ void BooleanOp::step4_eliminate_deadends()
 }*/
 std::vector<Cell> BooleanOp::dbg_step5_get_cells()
 {
-	selftest_edge_sorter();
-	std::set<Cell*> cells;
-	auto it=pair2edge.begin();
-	auto it2=pair2edge.end();
-	for(;it!=it2;++it)
-	{
-		BOOST_FOREACH(auto cell,it->second.side)
-			cells.insert(cell);
-	}
 	std::vector<Cell> cellv;
 	BOOST_FOREACH(auto cell,cells)
 		cellv.push_back(*cell);
@@ -217,6 +194,63 @@ static Rational abs(Rational x)
 		return -x;
 	return x;
 }
+Vertex BooleanOp::get_leftmost() const
+{
+	if (e.v1.x<e.v2.x || (e.v1.x==e.v2.x && e.v1.y<e.v2.y))
+		return e.v1;
+	return e.v2;
+}
+
+void BooleanOp::step9_calc_result()
+{
+	for(int cur_merged_poly=0;cur_merged_poly<num_merged_polys;++cur_merged_poly)
+	{
+		if (pair2edge.size()==0) throw std::runtime_error("No edges, can't calculate result");
+		Edge* leftmost=NULL;
+
+		BOOST_FOREACH(auto eitem,pair2edge)
+		{
+			Edge* e=&(eitem.second);
+			assert(e->side[0] && e->side[1]);
+			if (!(e->side[0].merged_poly==cur_merged_poly ||
+				  e->side[1].merged_poly==cur_merged_poly))
+				continue;
+			Vertex v=e->get_leftmost();
+			//printf("Leftmost Vertex of edge: %s\n",v.__repr__().c_str());
+			if (leftmost==NULL) leftmost=e
+			else if (v.x<leftmost.x) leftmost=e;
+			else if (v.x==leftmost->x && e->line_k<leftmost->line_k)
+				leftmost=e;
+		}
+		assert(leftmost!=NULL);
+
+		//The 'leftmost' edge is here known to be
+		//at the edge of a coherent SOLID body,
+		//and also to be headed away on a counter clockwise
+		//trip around that solid object
+
+		Vertex curvertex=leftmost.get_leftmost();
+		Edge* curedge=leftmost;
+		for(;;)
+		{
+			bool reversed=(curvertex==curedge->v2);
+			Vertex nextvertex=(reversed) ? curedge->v1 : curedge->v2;
+			auto edgemap_it=edgemap.find(nextvertex);
+			assert(edgemap_it!=edgemap.end());
+			BOOST_FOREACH(Edge* candidate,edgemap_it->second)
+			{
+				find the one and only edge with boundary
+				to cell with merged_poly_nr
+			}
+		}
+	}
+
+}
+Shape* BooleanOp::step9_get_result()
+{
+	return result;
+}
+
 void BooleanOp::step6_determine_cell_cover()
 {
 	if (vertices.size()==0) throw std::runtime_error("No vertices, can't determine cell cover");
@@ -479,6 +513,43 @@ void BooleanOp::step3_create_edges()
 		}
 	}
 }
+void BooleanOp::step7_classify_cells(BooleanOpStrategy* strat)
+{
+	BOOST_FOREACH(Cell* cell,cells)
+	{
+		cell->classification=strat->evaluate(*cell);
+	}
+}
+BooleanUpResult BooleanOrStrategy::evaluate(const Cell& cell)
+{
+	if (cell.cover.size()>0)
+		return SOLID;
+	return HOLE;
+}
+std::string Cell::get_classification()
+{
+	switch(classification)
+	{
+	case NONE: return "NONE";
+	case HOLE: return "HOLE";
+	case SOLID: return "SOLID";
+	default:
+		throw std::runtime_error("unexpected error in get_classification");
+	}
+	return "";
+}
+std::string Cell::__repr__() const
+{
+	std::ostringstream str;
+	str<<"Cell("<<edges.size()<<" edges ";
+	BOOST_FOREACH(const Polygon* cov,cover)
+	{
+		str<<" "<<cov->get_shape()->get_name();
+	}
+	str<<")";
+	return str.str();
+}
+
 void BooleanOp::step5_create_cells()
 {
 	//Now we have net of vertexes and edges,
@@ -493,40 +564,47 @@ void BooleanOp::step5_create_cells()
 		mark_side(1,&(it->second));
 	}
 }
-
-/*
-Shape boolean_add(const Shape& a,const Shape& b)
+void BooleanOp::step8_merge_cells()
 {
-	BooleanOp bop(&a,&b,BooleanOp::addition);
-	return bop.addition();
+	num_merged_polys=0;
+	BOOST_FOREACH(Cell* cell,cells)
+	{
+		if (cell->merged_poly!=-1) continue; //Already merged
+		printf("Restart with cell %s\n",cell->__repr__().c_str());
+		int cur_poly=num_merged_polys;
+		++num_merged_polys;
+		std::set<Cell*> merge_front;
+		merge_front.insert(cell);
+		while(!merge_front.empty())
+		{
+			std::set<Cell*> next_merge_front;
+			printf("Rerunning through merge front, %d items\n",(int)merge_front.size());
+			BOOST_FOREACH(auto mergecell,merge_front)
+			{
+				printf("Merging %s\n======================\n",
+						mergecell->__repr__().c_str());
+				if (mergecell->merged_poly!=-1) continue;
+				mergecell->merged_poly=cur_poly;
+				BOOST_FOREACH(auto neighitem,mergecell->neighbors)
+				{
+					Cell* neighcell=neighitem.first;
+					printf("Considering %s\n",
+						neighcell->__repr__().c_str());
+					if (neighcell->merged_poly==-1 && neighcell->classification==cell->classification)
+					{
+						printf("Added it\n");
+						next_merge_front.insert(neighcell);
+					}
+					else
+					{
+						printf("Did not add it\n");
+					}
+				}
+			}
+			merge_front.swap(next_merge_front);
+		}
+	}
+
 }
-*/
 
-/*
-struct Node
-{
-	Vertex v;
-	std::set<Edge*> edges;
-	void sort();
-};
-struct EdgeSorter
-{
-	Node* home;
-	EdgeSorter(Node* home_) : home(home_)
-	{
-	}
-	bool operator()(const Edge* e1,const Edge* e2) const
-	{
-		Node* other1=e1->get_other_node(home);
-		Node* other2=e2->get_other_node(home);
-		double e1a=atan2(other1->v.y,other1->v.x);
-		double e2a=atan2(other2->v.y,other2->v.x);
-		return e1a<e2a;
-	}
-};
-void Node::sort()
-{
-	EdgeSorter es(this);
-	std::sort(edges.begin(),edges.end(),es);
-}*/
 }
