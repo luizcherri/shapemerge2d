@@ -38,6 +38,7 @@ namespace std {
    %template(vvector) vector<shapemerge2d::Vertex>;
    %template(evector) vector<shapemerge2d::Edge>;
    %template(cvector) vector<shapemerge2d::Cell>;
+   %template(svector) vector<std::string>;
 }
 
 

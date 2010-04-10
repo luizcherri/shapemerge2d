@@ -162,89 +162,6 @@ Edge* BooleanOp::get_out_edge_from_in_edge(Vertex v,Edge* curedge,int side_)
 	return NULL;
 }
 
-#if 0
-struct LeftmostEdge
-{
-	bool operator()(const Cell* a,const Edge* b) const
-		{
-			assert(a!=NULL && b!=NULL);
-			Vertex ac=a->approx_center();
-			Vertex bc=b->approx_center();
-			if (ac.x<bc.x) return true;
-			if (ac.x>bc.x) return false;
-			return ac.y<bc.y;
-		}
-};
-Vertex BooleanOp::leftmost_vertex() const
-{
-	if (vertices.size()==0)
-		throw std::runtime_error("can't fetch leftmost vertex - there are no vertices at all!");
-	Vertex leftmost=*(vertices.begin());
-	BOOST_FOREACH(const Vertex& v,vertices)
-	{
-		if (v.x<leftmost.x || (v.x==leftmost.x && v.y<leftmost.y))
-			leftmost=v;
-	}
-	return leftmost;
-}
-
-bool BooleanOp::walk_to_edge_impl(Cell* cell,std::set<Cell*>& visited)
-{
-	std::map<Cell*,std::set<Edge*> >::iterator it=cell->neighbors.begin();
-	std::map<Cell*,std::set<Edge*> >::iterator it2=cell->neighbors.end();
-	std::vector<Cell*> sorted;
-	sorted.reserve(cell->neighbors.size());
-	for(;it!=it2;)
-	{
-		sorted.push_back(it->first);
-	}
-	Vertex leftmost=leftmost_vertex();
-	std::sort(sorted.begin(),sorted.end(),LeftmostEdge());
-	BOOST_FOREACH(Cell* neighborcell,sorted)
-	{
-		if (visited.find(neighborcell)!=visited.end())
-			continue;//already visited
-		Vertex cell_leftmost=neighborcell->leftmost_vertex();
-		if (cell_leftmost==leftmost)
-			return true, //found edge
-	}
-	return false; //all were visted.
-}
-bool BooleanOp::walk_to_edge(Cell* cell)
-{
-	std::set<Cell*> visited;
-	return walk_to_edge_impl(cell,visited);
-}
-Vertex Cell::approx_center() const
-{
-	if (edges.size()==0)
-		throw std::runtime_error("Cell without edges has no center!");
-	double sx=0,sy=0;
-	BOOST_FOREACH(Edge* edge,edges)
-	{
-		sx+=edge->v1.x;
-		sy+=edge->v1.y;
-		sx+=edge->v2.x;
-		sy+=edge->v2.y;
-	}
-	sx/=edges.size()*2;
-	sy/=edges.size()*2;
-	return Vertex(round(sx),round(sy));
-}
-Vertex Cell::leftmost_vertex() const
-{
-	if (edges.size()==0)
-		throw std::runtime_error("Cell without edges has no leftmost vertex!");
-	Vertex leftmost=leftmost_vertex_of(**edges.begin());
-	BOOST_FOREACH(Edge* edge,edges)
-	{
-		Vertex edgev=leftmost_vertex_of(*edge);
-		if (edgev.x<leftmost.x || (edgev.x==leftmost.x && edgev.y<leftmost.y))
-			leftmost=edgev;
-	}
-	return leftmost;
-}
-#endif
 
 typedef std::pair<Vertex,std::set<Edge*> > p_t;
 void BooleanOp::step4_eliminate_deadends()
@@ -326,13 +243,51 @@ void BooleanOp::step6_determine_cell_cover()
 		if (abs(edge->line_k)>abs(startedge->line_k))
 			startedge=edge;
 	}
+	if (!(startedge->line_is_vertical) && abs(startedge->line_k)==0)
+		throw std::runtime_error("Unexpected error - leftmost vertex has only completely horizontal edges. These should have been filtered out by dead-end filter.");
+
 	assert(startedge!=NULL);
+	assert(startedge->side[0]!=NULL && startedge->side[1]!=NULL);
+
 	int sid=0;
-	if (startedge->side[0]!=NULL) sid=0;
-	if (startedge->side[1]!=NULL) sid=1;
-	if (startedge->side[sid]==NULL) throw std::runtime_error("Starting edge is not adjacent to a cell! Strange!");
+	if (startedge->v1.x<startedge->v2.x)
+	{
+		if (startedge->v1.y<startedge->v2.y)
+		{
+			//   /2 |
+			//  /   |
+			//1/    |
+			sid=0;
+		}
+		else
+		{
+			//1\    |
+			//  \   |
+			//   \2 |
+			sid=1;
+		}
+	}
+	else
+	{
+		if (startedge->v1.y<startedge->v2.y)
+		{
+			//2\    |
+			//  \   |
+			//   \1 |
+			sid=0;
+		}
+		else
+		{
+			//   /1 |
+			//  /   |
+			//2/    |
+			sid=1;
+		}
+	}
+
 	Cell* curcell=startedge->side[sid];
-	std::set<const Polygon*> curpolys=startedge->polys;
+	assert(curcell);
+	std::set<const Polygon*> curpolys; //We're starting out in the void
 	std::set<Cell*> visited_cells;
 	recurse_determine_cover(curcell,curpolys,visited_cells);
 }
@@ -446,6 +401,7 @@ std::vector<std::string> Cell::get_shapes()
 	BOOST_FOREACH(auto poly,cover)
 	{
 		const Shape* shp=poly->get_shape();
+		assert(shp!=NULL);
 		shapenames.insert(shp->get_name());
 	}
 	std::vector<std::string> shapev;

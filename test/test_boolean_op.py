@@ -148,31 +148,25 @@ def test_add_lines():
         s=set()
         for v1,v2 in zip(vertices,vertices[1:]+vertices[:1]):
             s.add(NondirLine(v1,v2))
-        return s
+        return frozenset(s)
             
-    facit_cells=[
+    facit_cells={
                  lineset(Vertex(0,0),Vertex(2,0),Vertex(2,1),Vertex(3,1),
-                         Vertex(3,3),Vertex(1,3),Vertex(1,2),Vertex(0,2)),
-                 lineset(Vertex(1,1),Vertex(2,1),Vertex(2,2),Vertex(1,2)),
+                         Vertex(3,3),Vertex(1,3),Vertex(1,2),Vertex(0,2)):"outline",
+                 lineset(Vertex(1,1),Vertex(2,1),Vertex(2,2),Vertex(1,2)):"center",
                  lineset(Vertex(2,1),Vertex(3,1),Vertex(3,3),Vertex(1,3),
-                         Vertex(1,2),Vertex(2,2)),
+                         Vertex(1,2),Vertex(2,2)):"upper_right",
                  lineset(Vertex(0,0),Vertex(2,0),Vertex(2,1),Vertex(1,1),
-                         Vertex(1,2),Vertex(0,2))
-                 ]
-    print "Facit cells","\n".join(str(x) for x in facit_cells)
+                         Vertex(1,2),Vertex(0,2)):"lower_left"
+                 }
+    print "Facit cells","\n".join(str(x) for x in facit_cells.keys())
     assert len(cells)==4
     
     for cell in cells:
         edges=cell.dbg_get_edges()
         edgelines=set(NondirLine(edge.get_v1(),edge.get_v2()) for edge in edges)
         
-        if not (edgelines in facit_cells):
-            for facitnr in xrange(len(facit_cells)):
-                print "============================================="
-                print "Comparing against facit #%d"%(facitnr,)
-                facit=facit_cells[facitnr]
-                print "Extra:",edgelines.difference(facit)
-                print "Missing:",facit.difference(edgelines)
+        if not (edgelines in facit_cells.keys()):
             
             
             sqs=[]
@@ -185,4 +179,12 @@ def test_add_lines():
                     (255,0,0)))
             draw_things(sqs)
     bo.step6_determine_cell_cover()
-    
+
+    cells=list(bo.dbg_step5_get_cells())
+    for cell in cells:
+        edges=cell.dbg_get_edges()
+        edgelines=frozenset(NondirLine(edge.get_v1(),edge.get_v2()) for edge in edges)
+        shapes=list(cell.get_shapes())
+        realcellname=facit_cells[edgelines]
+        print "Cell: %s, shapes: %s"%(realcellname,", ".join(shapes))
+        

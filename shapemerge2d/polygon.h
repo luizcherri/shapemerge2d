@@ -32,6 +32,10 @@ namespace shapemerge2d
 			HOLE,
 			SOLID
 		};
+		void set_shape(const Shape* shape)
+		{
+			this->shape=shape;
+		}
 		/**
 		 * Caller must ensure that polygon edges do not cross each other.
 		 * Edges may coincide, but not actually cross. (Consider a
@@ -59,7 +63,7 @@ namespace shapemerge2d
 		const Shape* get_shape()const{return shape;}
 	private:
 		Kind kind;
-		Shape* shape;
+		const Shape* shape;
 		std::vector<Line2> lines;
 
 	};
