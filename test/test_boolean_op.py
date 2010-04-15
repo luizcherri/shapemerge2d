@@ -3,6 +3,8 @@ from pyshapemerge2d import Line2,Vertex,Vector,BooleanOp,Polygon,vvector,Shape,l
 from visualize import draw_things
 import visualize
 from math import sin,cos
+from itertools import izip,count
+
 vorig=Vertex
 def test_edge_sort():
     b=BooleanOp()
@@ -235,4 +237,11 @@ def test_add_lines():
         print "Cell %s merged_poly: %s, class: %s"%(realcellname,cell.get_merged_poly(),cell.get_classification())
         print "%s: Neighbors:"%realcellname," ".join(lookup_cellname(ce) for ce in cell.get_neighbors())
         assert cell.get_merged_poly()==facit_cell_merged[realcellname]
-            
+    
+    bo.step9_calc_result()
+    shape=bo.step9_get_result()
+    polys=list(shape.get_polys())
+    for polycnt,poly in izip(count(),polys):
+        print "Poly #%d: %s %s"%(polycnt,poly.get_kind_str(),list(poly.get_lines()))
+    
+    

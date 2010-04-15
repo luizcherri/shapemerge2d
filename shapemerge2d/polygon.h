@@ -36,12 +36,24 @@ namespace shapemerge2d
 		{
 			this->shape=shape;
 		}
+		std::string get_kind_str() const
+		{
+			switch(kind)
+			{
+			case HOLE: return "HOLE";
+			case SOLID: return "SOLID";
+			}
+			throw std::runtime_error("Internal error in polygon");
+		}
 		/**
 		 * Caller must ensure that polygon edges do not cross each other.
 		 * Edges may coincide, but not actually cross. (Consider a
 		 * very very flat triangle, then segment each of the three edges
 		 * into many small edges. Some of these small edges will coincide.)
 		 */
+		Polygon() : kind(SOLID),shape(NULL)
+		{
+		}
 		Polygon(const std::vector<Vertex>& vs,Kind pkind=SOLID,Shape* pshape=NULL) :
 			kind(pkind),
 			shape(pshape)

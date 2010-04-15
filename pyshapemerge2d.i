@@ -35,6 +35,7 @@ using namespace shapemerge2d;
 
 namespace std {
    %template(lvector) vector<shapemerge2d::Line2>;
+   %template(pvector) vector<shapemerge2d::Polygon>;
    %template(vvector) vector<shapemerge2d::Vertex>;
    %template(evector) vector<shapemerge2d::Edge>;
    %template(cvector) vector<shapemerge2d::Cell>;

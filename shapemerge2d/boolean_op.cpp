@@ -194,56 +194,111 @@ static Rational abs(Rational x)
 		return -x;
 	return x;
 }
-Vertex BooleanOp::get_leftmost() const
+Vertex Edge::get_leftmost() const
 {
-	if (e.v1.x<e.v2.x || (e.v1.x==e.v2.x && e.v1.y<e.v2.y))
-		return e.v1;
-	return e.v2;
+	if (v1.x<v2.x || (v1.x==v2.x && v1.y<v2.y))
+		return v1;
+	return v2;
 }
 
 void BooleanOp::step9_calc_result()
 {
+	std::vector<Polygon> res_polys;
 	for(int cur_merged_poly=0;cur_merged_poly<num_merged_polys;++cur_merged_poly)
 	{
 		if (pair2edge.size()==0) throw std::runtime_error("No edges, can't calculate result");
 		Edge* leftmost=NULL;
-
-		BOOST_FOREACH(auto eitem,pair2edge)
+		//find "leftmost" edge of poly marked with 'merged_poly' == cur_merged_poly
+		printf("Iterate through pair2edge\n-----------------------------------------\n");
+		BooleanUpResult cur_classification=UNCLASSIFIED;
+		BOOST_FOREACH(auto& eitem,pair2edge)
 		{
 			Edge* e=&(eitem.second);
 			assert(e->side[0] && e->side[1]);
-			if (!(e->side[0].merged_poly==cur_merged_poly ||
-				  e->side[1].merged_poly==cur_merged_poly))
+			if (!(e->side[0]->merged_poly==cur_merged_poly ||
+				  e->side[1]->merged_poly==cur_merged_poly))
 				continue;
+			Cell* cell=NULL;
+			if (e->side[0]->merged_poly==cur_merged_poly)
+				cell=e->side[0];
+			if (e->side[1]->merged_poly==cur_merged_poly)
+				cell=e->side[1];
+			assert(cell);
+			if (cur_classification==UNCLASSIFIED)
+				cur_classification=cell->classification;
+			else
+				assert(cur_classification==cell->classification);
+
 			Vertex v=e->get_leftmost();
-			//printf("Leftmost Vertex of edge: %s\n",v.__repr__().c_str());
-			if (leftmost==NULL) leftmost=e
-			else if (v.x<leftmost.x) leftmost=e;
-			else if (v.x==leftmost->x && e->line_k<leftmost->line_k)
+			printf("Leftmost Vertex of edge: %s\n",v.__repr__().c_str());
+			printf("Value of 'leftmost' %p: %s\n",leftmost,leftmost ? leftmost->get_leftmost().__repr__().c_str() : "null");
+			if (leftmost==NULL)
 				leftmost=e;
+			else if (v.x<leftmost->get_leftmost().x)
+				leftmost=e;
+			else if (v.x==leftmost->get_leftmost().x && e->line_k<leftmost->line_k)
+				leftmost=e;
+			printf("Updated 'leftmost' %p: %s\n",leftmost,leftmost->get_leftmost().__repr__().c_str());
 		}
+		printf("Finished iterating through pair2edge\n-----------------------------------------\n");
 		assert(leftmost!=NULL);
 
 		//The 'leftmost' edge is here known to be
-		//at the edge of a coherent SOLID body,
+		//at the edge of a coherent body,
 		//and also to be headed away on a counter clockwise
 		//trip around that solid object
 
-		Vertex curvertex=leftmost.get_leftmost();
+		Vertex curvertex=leftmost->get_leftmost();
+		Vertex startvertex=curvertex;
 		Edge* curedge=leftmost;
+		std::vector<Vertex> output;
+		output.push_back(curvertex);
 		for(;;)
 		{
 			bool reversed=(curvertex==curedge->v2);
 			Vertex nextvertex=(reversed) ? curedge->v1 : curedge->v2;
+			if (nextvertex==startvertex)
+				break;
 			auto edgemap_it=edgemap.find(nextvertex);
 			assert(edgemap_it!=edgemap.end());
+			std::vector<Edge*> edge_candidates;
 			BOOST_FOREACH(Edge* candidate,edgemap_it->second)
 			{
-				find the one and only edge with boundary
+				if (candidate==curedge)
+					continue;
+				/*
+				find the most counter clockwise edge with boundary
 				to cell with merged_poly_nr
+				*/
+				bool side0_is=(candidate->side[0]->merged_poly==cur_merged_poly);
+				bool side1_is=(candidate->side[1]->merged_poly==cur_merged_poly);
+				if (side0_is!=side1_is) //A boundary
+				{
+					edge_candidates.push_back(candidate);
+				}
 			}
+			if (edge_candidates.empty())
+			{
+				std::ostringstream s;
+				s<<"Couldn't find any matching outgoing edge from: "<<nextvertex.__repr__();
+				throw std::runtime_error(s.str());
+			}
+			EdgeSorter es(nextvertex,curedge,reversed ? 1 : 0);
+			std::sort(edge_candidates.begin(),edge_candidates.end(),es); //FIXME: Don't sort, just find smallest.
+			Edge* nextedge=edge_candidates.front();
+			curedge=nextedge;
+			curvertex=nextvertex;
+			output.push_back(curvertex);
 		}
+		Polygon::Kind polykind=Polygon::HOLE;
+		if (cur_classification==HOLE)
+			polykind=
+#error
+		Polygon poly(output,cur_classification);
+		res_polys.push_back(poly);
 	}
+	if (result!=NULL) delete result;
+	result=new Shape("mergeresult",res_polys);
 
 }
 Shape* BooleanOp::step9_get_result()
