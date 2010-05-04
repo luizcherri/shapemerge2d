@@ -185,6 +185,7 @@ class Line2(_object):
     def reversed(self): return _pyshapemerge2d.Line2_reversed(self)
     def is_vertical(self): return _pyshapemerge2d.Line2_is_vertical(self)
     def get_k(self): return _pyshapemerge2d.Line2_get_k(self)
+    def get_m(self): return _pyshapemerge2d.Line2_get_m(self)
     def __init__(self, *args): 
         this = _pyshapemerge2d.new_Line2(*args)
         try: self.this.append(this)
@@ -220,11 +221,12 @@ class Polygon(_object):
     __setattr__ = lambda self, name, value: _swig_setattr(self, Polygon, name, value)
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, Polygon, name)
-    __repr__ = _swig_repr
     HOLE = _pyshapemerge2d.Polygon_HOLE
     SOLID = _pyshapemerge2d.Polygon_SOLID
     def set_shape(self, *args): return _pyshapemerge2d.Polygon_set_shape(self, *args)
+    def __eq__(self, *args): return _pyshapemerge2d.Polygon___eq__(self, *args)
     def get_kind_str(self): return _pyshapemerge2d.Polygon_get_kind_str(self)
+    def __repr__(self): return _pyshapemerge2d.Polygon___repr__(self)
     def __init__(self, *args): 
         this = _pyshapemerge2d.new_Polygon(*args)
         try: self.this.append(this)
@@ -232,6 +234,9 @@ class Polygon(_object):
     def get_lines(self): return _pyshapemerge2d.Polygon_get_lines(self)
     def lower_left_vertex(self): return _pyshapemerge2d.Polygon_lower_left_vertex(self)
     def get_shape(self): return _pyshapemerge2d.Polygon_get_shape(self)
+    def remove_loops(self): return _pyshapemerge2d.Polygon_remove_loops(self)
+    def is_ccw(self): return _pyshapemerge2d.Polygon_is_ccw(self)
+    def merge_straight_sections(self): return _pyshapemerge2d.Polygon_merge_straight_sections(self)
     __swig_destroy__ = _pyshapemerge2d.delete_Polygon
     __del__ = lambda self : None;
 Polygon_swigregister = _pyshapemerge2d.Polygon_swigregister
@@ -242,22 +247,24 @@ class Shape(_object):
     __setattr__ = lambda self, name, value: _swig_setattr(self, Shape, name, value)
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, Shape, name)
-    __repr__ = _swig_repr
     def get_this(self): return _pyshapemerge2d.Shape_get_this(self)
     def get_polys(self): return _pyshapemerge2d.Shape_get_polys(self)
+    def __eq__(self, *args): return _pyshapemerge2d.Shape___eq__(self, *args)
     def __init__(self, *args): 
         this = _pyshapemerge2d.new_Shape(*args)
         try: self.this.append(this)
         except: self.this = this
     def get_name(self): return _pyshapemerge2d.Shape_get_name(self)
+    def __repr__(self): return _pyshapemerge2d.Shape___repr__(self)
+    def dump(self): return _pyshapemerge2d.Shape_dump(self)
     __swig_destroy__ = _pyshapemerge2d.delete_Shape
     __del__ = lambda self : None;
 Shape_swigregister = _pyshapemerge2d.Shape_swigregister
 Shape_swigregister(Shape)
 
-NONE = _pyshapemerge2d.NONE
 HOLE = _pyshapemerge2d.HOLE
 SOLID = _pyshapemerge2d.SOLID
+VOID = _pyshapemerge2d.VOID
 UNCLASSIFIED = _pyshapemerge2d.UNCLASSIFIED
 class Cell(_object):
     __swig_setmethods__ = {}
@@ -269,6 +276,7 @@ class Cell(_object):
         try: self.this.append(this)
         except: self.this = this
     def get_merged_poly(self): return _pyshapemerge2d.Cell_get_merged_poly(self)
+    def get_leftmost(self): return _pyshapemerge2d.Cell_get_leftmost(self)
     def dbg_get_edges(self): return _pyshapemerge2d.Cell_dbg_get_edges(self)
     def get_shapes(self): return _pyshapemerge2d.Cell_get_shapes(self)
     def get_neighbors(self): return _pyshapemerge2d.Cell_get_neighbors(self)
@@ -284,7 +292,7 @@ class Edge(_object):
     __setattr__ = lambda self, name, value: _swig_setattr(self, Edge, name, value)
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, Edge, name)
-    __repr__ = _swig_repr
+    def __repr__(self): return _pyshapemerge2d.Edge___repr__(self)
     def get_k_approx(self): return _pyshapemerge2d.Edge_get_k_approx(self)
     def get_is_vertical(self): return _pyshapemerge2d.Edge_get_is_vertical(self)
     def get_v1(self): return _pyshapemerge2d.Edge_get_v1(self)
@@ -308,6 +316,8 @@ class VertexPair(_object):
     __repr__ = _swig_repr
     def get_v1(self): return _pyshapemerge2d.VertexPair_get_v1(self)
     def get_v2(self): return _pyshapemerge2d.VertexPair_get_v2(self)
+    def smallest(self): return _pyshapemerge2d.VertexPair_smallest(self)
+    def largest(self): return _pyshapemerge2d.VertexPair_largest(self)
     def __init__(self, *args): 
         this = _pyshapemerge2d.new_VertexPair(*args)
         try: self.this.append(this)

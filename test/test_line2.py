@@ -95,6 +95,7 @@ def all_pairs(seq):
     for i in range(l):
         for j in range(i+1, l):
             yield seq[i], seq[j]
+
     
 def test_intersection_ex1():    
     la=Line2(Vertex(5,5),Vertex(3,2))
@@ -113,6 +114,17 @@ def test_intersection_ex1():
     #                (lb,(0,255,0)),
     #                (ls[0],(0,0,255)),
     #                ],[])
+def test_intersection_ex2():    
+    la=Line2(Vertex(0,2),Vertex(2,2))
+    lb=Line2(Vertex(1,1),Vertex(1,4))
+    ls=list(la.intersection_points(lb))
+    assert set(ls)==set([Vertex(1,2)])
+def test_intersection_ex3():    
+    la=Line2(Vertex(0,2),Vertex(2,2))
+    lb=Line2(Vertex(1,4),Vertex(1,1))
+    ls=list(la.intersection_points(lb))
+    print "Actual: %s"%(ls,)
+    assert set(ls)==set([Vertex(1,2)])
 
 def test_adjacency():
     def r():

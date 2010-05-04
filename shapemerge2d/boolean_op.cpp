@@ -8,6 +8,46 @@ BooleanOp::BooleanOp()
 	result=NULL;
 	num_merged_polys=0;
 }
+static bool leftmost_edge_is_reversed(Line2 line)
+{
+	bool reversed=false;
+	if (line.get_v1().x<line.get_v2().x)
+	{
+		if (line.get_v1().y<line.get_v2().y)
+		{
+			//   /2 |
+			//  /   |
+			//1/    |
+			reversed=false;
+		}
+		else
+		{
+			//1\    |
+			//  \   |
+			//   \2 |
+			reversed=true;
+		}
+	}
+	else
+	{
+		if (line.get_v1().y<line.get_v2().y)
+		{
+			//2\    |
+			//  \   |
+			//   \1 |
+			reversed=false;
+		}
+		else
+		{
+			//   /1 |
+			//  /   |
+			//2/    |
+			reversed=true;
+		}
+	}
+	return reversed;
+}
+
 void BooleanOp::mark_side(int side_,Edge* edge_)
 {
 	if (edge_->side[side_]!=NULL)
@@ -15,25 +55,34 @@ void BooleanOp::mark_side(int side_,Edge* edge_)
 	Edge* curedge=edge_;
 	Cell* cell=new Cell();
 	cells.push_back(cell);
-	Vertex last_cell_end=edge_->v1;
-
+	Vertex last_edge_end=edge_->v1;
+	//printf("Marking cell:%p last_edge_end: %s\n",cell,last_edge_end.__repr__().c_str());
 	for(;;)
 	{
 		int markside=side_; //0 is left side,1 is right side
-		if (last_cell_end==curedge->v2)
+		if (last_edge_end==curedge->v2)
 		{
 			markside+=1;
-			last_cell_end=curedge->v1;
+			last_edge_end=curedge->v1;
 		}
 		else
 		{
-			if (last_cell_end!=curedge->v1)
+			if (last_edge_end!=curedge->v1)
 				throw std::runtime_error("Unexpected error!");
-			assert(last_cell_end==curedge->v1);
-			last_cell_end=curedge->v2;
+			assert(last_edge_end==curedge->v1);
+			last_edge_end=curedge->v2;
 		}
 		markside&=1;
+		/*if (curedge->side[markside]!=NULL)
+		{ //DBG
+
+
+
+		}*/
+		/*if (curedge->side[markside]!=NULL)
+			printf("Already marked: %s[%d]\n",curedge->__repr__().c_str(),markside);*/
 		assert(curedge->side[markside]==NULL);
+		//printf("Marking %s[%d]=%p\n",curedge->__repr__().c_str(),markside,cell);
 		curedge->side[markside]=cell;
 		cell->edges.insert(curedge);
 		if (curedge->side[0] && curedge->side[1]) //Cells on both sides of edge have been found.
@@ -41,12 +90,23 @@ void BooleanOp::mark_side(int side_,Edge* edge_)
 			curedge->side[0]->neighbors[curedge->side[1]].insert(curedge);
 			curedge->side[1]->neighbors[curedge->side[0]].insert(curedge);
 		}
-		Edge* next=get_out_edge_from_in_edge(last_cell_end,curedge,side_);
+		Edge* next=get_out_edge_from_in_edge(last_edge_end,curedge,side_);
+		/*printf("Resolution, out-edge from %s\n   with in-edge: %s (%p)\n   is : %s (%p)\n",
+				last_edge_end.__repr__().c_str(),
+				curedge->__repr__().c_str(),curedge,
+				next->__repr__().c_str(),next);*/
 		if (next==edge_)
 			return;//finished
 		curedge=next;
 	}
 }
+std::string Edge::__repr__() const
+{
+	std::ostringstream s;
+	s<<"Edge("<<v1.__repr__()<<","<<v2.__repr__()<<")";
+	return s.str();
+}
+
 struct EdgeSorter
 {
 	Vertex v;
@@ -102,13 +162,13 @@ struct EdgeSorter
 			ret=daa<dab;
 		else
 			ret=daa>dab;
-		printf("Checking if %s-%s < %s-%s (turning %s). Answer: %s\n",
+		/*printf("Checking if %s-%s < %s-%s (turning %s). Answer: %s\n",
 				a->v1.__repr__().c_str(),
 				a->v2.__repr__().c_str(),
 				b->v1.__repr__().c_str(),
 				b->v2.__repr__().c_str(),
 				side==0 ? "left" : "right",
-				ret ? "yes" : "no");
+				ret ? "yes" : "no");*/
 		return ret;
 
 	}
@@ -209,7 +269,7 @@ void BooleanOp::step9_calc_result()
 		if (pair2edge.size()==0) throw std::runtime_error("No edges, can't calculate result");
 		Edge* leftmost=NULL;
 		//find "leftmost" edge of poly marked with 'merged_poly' == cur_merged_poly
-		printf("Iterate through pair2edge\n-----------------------------------------\n");
+		//printf("Iterate through pair2edge\n-----------------------------------------\n");
 		BooleanUpResult cur_classification=UNCLASSIFIED;
 		BOOST_FOREACH(auto& eitem,pair2edge)
 		{
@@ -227,20 +287,23 @@ void BooleanOp::step9_calc_result()
 			if (cur_classification==UNCLASSIFIED)
 				cur_classification=cell->classification;
 			else
+			if (cur_classification==HOLE && cell->classification==VOID)
+				cur_classification=VOID;
+			else
 				assert(cur_classification==cell->classification);
 
 			Vertex v=e->get_leftmost();
-			printf("Leftmost Vertex of edge: %s\n",v.__repr__().c_str());
-			printf("Value of 'leftmost' %p: %s\n",leftmost,leftmost ? leftmost->get_leftmost().__repr__().c_str() : "null");
+			/*printf("Leftmost Vertex of edge: %s\n",v.__repr__().c_str());
+			printf("Value of 'leftmost' %p: %s\n",leftmost,leftmost ? leftmost->get_leftmost().__repr__().c_str() : "null");*/
 			if (leftmost==NULL)
 				leftmost=e;
 			else if (v.x<leftmost->get_leftmost().x)
 				leftmost=e;
 			else if (v.x==leftmost->get_leftmost().x && e->line_k<leftmost->line_k)
 				leftmost=e;
-			printf("Updated 'leftmost' %p: %s\n",leftmost,leftmost->get_leftmost().__repr__().c_str());
+			//printf("Updated 'leftmost' %p: %s\n",leftmost,leftmost->get_leftmost().__repr__().c_str());
 		}
-		printf("Finished iterating through pair2edge\n-----------------------------------------\n");
+		//printf("Finished iterating through pair2edge\n-----------------------------------------\n");
 		assert(leftmost!=NULL);
 
 		//The 'leftmost' edge is here known to be
@@ -248,9 +311,21 @@ void BooleanOp::step9_calc_result()
 		//and also to be headed away on a counter clockwise
 		//trip around that solid object
 
-		Vertex curvertex=leftmost->get_leftmost();
-		Vertex startvertex=curvertex;
+		//Vertex curvertex=leftmost->get_leftmost();
+		//Vertex startvertex=curvertex;
+		Vertex curvertex,startvertex;
 		Edge* curedge=leftmost;
+		if (leftmost_edge_is_reversed(Line2(leftmost->v1,leftmost->v2)))
+		{
+			startvertex=curedge->v1;
+			curvertex=curedge->v1;
+		}
+		else
+		{
+			startvertex=curedge->v2;
+			curvertex=curedge->v2;
+		}
+
 		std::vector<Vertex> output;
 		output.push_back(curvertex);
 		for(;;)
@@ -262,10 +337,14 @@ void BooleanOp::step9_calc_result()
 			auto edgemap_it=edgemap.find(nextvertex);
 			assert(edgemap_it!=edgemap.end());
 			std::vector<Edge*> edge_candidates;
+			//std::cout<<"Looking for edge candidates, next vertex: "<<nextvertex.__repr__()<<", incoming="<<curedge->v1.__repr__()<<"->"<<curedge->v2.__repr__()<<"\n";
+			//std::cout<<"num cands: "<<edgemap_it->second.size()<<"\n";
 			BOOST_FOREACH(Edge* candidate,edgemap_it->second)
 			{
+
 				if (candidate==curedge)
 					continue;
+				//std::cout<<"  Candidate="<<candidate->v1.__repr__()<<"->"<<candidate->v2.__repr__()<<"\n";
 				/*
 				find the most counter clockwise edge with boundary
 				to cell with merged_poly_nr
@@ -277,14 +356,19 @@ void BooleanOp::step9_calc_result()
 					edge_candidates.push_back(candidate);
 				}
 			}
+			//std::cout<<" ==========================================\n";
 			if (edge_candidates.empty())
 			{
 				std::ostringstream s;
-				s<<"Couldn't find any matching outgoing edge from: "<<nextvertex.__repr__();
+				s<<"  Couldn't find any matching outgoing edge from: "<<nextvertex.__repr__();
 				throw std::runtime_error(s.str());
 			}
+			//BOOST_FOREACH(Edge* edge,edge_candidates)
+			//	std::cout<<"  chosen="<<edge->v1.__repr__()<<"->"<<edge->v2.__repr__()<<"\n";
+			//std::cout<<"  $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n";
 			EdgeSorter es(nextvertex,curedge,reversed ? 1 : 0);
 			std::sort(edge_candidates.begin(),edge_candidates.end(),es); //FIXME: Don't sort, just find smallest.
+			assert(edge_candidates.size()>0);
 			Edge* nextedge=edge_candidates.front();
 			curedge=nextedge;
 			curvertex=nextvertex;
@@ -292,99 +376,117 @@ void BooleanOp::step9_calc_result()
 		}
 		Polygon::Kind polykind=Polygon::HOLE;
 		if (cur_classification==HOLE)
-			polykind=
-#error
-		Polygon poly(output,cur_classification);
+			polykind=Polygon::HOLE;
+		else if (cur_classification==SOLID)
+			polykind=Polygon::SOLID;
+		else if (cur_classification==VOID)
+			continue; //Make no polygon from the void
+		else
+		{
+			std::ostringstream s;
+			s<<"Found merged cell with invalid classification: "<<cur_classification;
+			throw std::runtime_error(s.str());
+		}
+		Polygon poly(output,polykind);
+		if (!poly.is_ccw())
+		{
+			throw std::runtime_error("Polygon is not ccw");
+		}
+		poly.merge_straight_sections();
 		res_polys.push_back(poly);
 	}
 	if (result!=NULL) delete result;
 	result=new Shape("mergeresult",res_polys);
 
 }
+Vertex Cell::get_leftmost()
+{
+	Vertex leftmost;
+	bool have_leftmost=false;
+	BOOST_FOREACH(Edge* edge,edges)
+	{
+		if (!have_leftmost)
+		{
+			leftmost=edge->get_leftmost();
+			have_leftmost=true;
+		}
+		else
+		{
+			Vertex l=edge->get_leftmost();
+			if (l<leftmost)
+				leftmost=l;
+		}
+	}
+	if (!have_leftmost)
+		throw std::runtime_error("The cell didn't have a leftmost vertex!");
+	return leftmost;
+}
+
 Shape* BooleanOp::step9_get_result()
 {
 	return result;
 }
-
 void BooleanOp::step6_determine_cell_cover()
 {
 	if (vertices.size()==0) throw std::runtime_error("No vertices, can't determine cell cover");
-	Vertex leftmost=*vertices.begin();
-	BOOST_FOREACH(Vertex v,vertices)
+	for(;;)
 	{
-		printf("Vertex: %s\n",v.__repr__().c_str());
-		if (v.x<leftmost.x) leftmost=v;
-		else if (v.x==leftmost.x && v.y<leftmost.y)
-			leftmost=v;
-	}
-	std::set<Edge*>& edges=edgemap[leftmost];
-	assert(edges.size()>0);
-	Edge* startedge=NULL;
-	BOOST_FOREACH(Edge* edge,edges)
-	{
-		if (startedge==NULL) startedge=edge;
-		if (edge->line_is_vertical)
+		Vertex leftmost;
+		bool have_leftmost=false;
+		BOOST_FOREACH(Cell* cell,cells)
 		{
-			//Any vertical line at the leftmost vertex, *MUST* be an outer edge
-			startedge=edge;
-			break;
+			if (cell->cover_determined) continue;
+			Vertex l=cell->get_leftmost();
+			if (!have_leftmost)
+			{
+				leftmost=l;
+				have_leftmost=true;
+			}
+			else
+			{
+				if (l<leftmost)
+					leftmost=l;
+			}
 		}
-		if (abs(edge->line_k)>abs(startedge->line_k))
-			startedge=edge;
-	}
-	if (!(startedge->line_is_vertical) && abs(startedge->line_k)==0)
-		throw std::runtime_error("Unexpected error - leftmost vertex has only completely horizontal edges. These should have been filtered out by dead-end filter.");
-
-	assert(startedge!=NULL);
-	assert(startedge->side[0]!=NULL && startedge->side[1]!=NULL);
-
-	int sid=0;
-	if (startedge->v1.x<startedge->v2.x)
-	{
-		if (startedge->v1.y<startedge->v2.y)
+		if (!have_leftmost) break; //we're done, we've marked the cover of all cells
+		std::set<Edge*>& edges=edgemap[leftmost];
+		assert(edges.size()>0);
+		Edge* startedge=NULL;
+		BOOST_FOREACH(Edge* edge,edges)
 		{
-			//   /2 |
-			//  /   |
-			//1/    |
-			sid=0;
+			if (startedge==NULL) startedge=edge;
+			if (edge->line_is_vertical)
+			{
+				//Any vertical line at the leftmost vertex, *MUST* be an outer edge
+				startedge=edge;
+				break;
+			}
+			if (abs(edge->line_k)>abs(startedge->line_k))
+				startedge=edge;
 		}
-		else
-		{
-			//1\    |
-			//  \   |
-			//   \2 |
+		if (!(startedge->line_is_vertical) && abs(startedge->line_k)==0)
+			throw std::runtime_error("Unexpected error - leftmost vertex has only completely horizontal edges. These should have been filtered out by dead-end filter.");
+
+		assert(startedge!=NULL);
+		assert(startedge->side[0]!=NULL && startedge->side[1]!=NULL);
+
+		int sid=0;
+		if (leftmost_edge_is_reversed(Line2(startedge->v1,startedge->v2)))
 			sid=1;
-		}
-	}
-	else
-	{
-		if (startedge->v1.y<startedge->v2.y)
-		{
-			//2\    |
-			//  \   |
-			//   \1 |
-			sid=0;
-		}
-		else
-		{
-			//   /1 |
-			//  /   |
-			//2/    |
-			sid=1;
-		}
-	}
 
-	Cell* curcell=startedge->side[sid];
-	assert(curcell);
-	std::set<const Polygon*> curpolys; //We're starting out in the void
-	std::set<Cell*> visited_cells;
-	recurse_determine_cover(curcell,curpolys,visited_cells);
+		Cell* curcell=startedge->side[sid];
+		assert(curcell);
+		std::set<const Polygon*> curpolys; //We're starting out in the void
+		std::set<Cell*> visited_cells;
+		recurse_determine_cover(curcell,curpolys,visited_cells);
+	}
 }
 void BooleanOp::recurse_determine_cover(Cell* curcell,std::set<const Polygon*> curpolys,std::set<Cell*>& visited)
 {
 	if (visited.find(curcell)!=visited.end())
 		return; //already visited
 	visited.insert(curcell);
+	curcell->cover_determined=true;
 	curcell->cover=curpolys;
 	BOOST_FOREACH(Edge* border,curcell->edges)
 	{
@@ -442,6 +544,7 @@ void BooleanOp::step2_intersect_lines()
 {
 
 	std::vector<Line2>::iterator ita=all_lines.begin();
+	std::set<Vertex> isect_vert;
 	for(;ita!=all_lines.end();++ita)
 	{
 		std::vector<Line2>::iterator itb=all_lines.begin();
@@ -449,14 +552,18 @@ void BooleanOp::step2_intersect_lines()
 		{
 			if (ita==itb) continue;
 			std::vector<Vertex> ret=ita->intersection_points(*itb);
+			//std::cout<<"Intersected "<<ita->__repr__()<<" and "<<itb->__repr__()<<"\n";
+
 			BOOST_FOREACH(Vertex v,ret)
 			{
+				//std::cout<<"Resulting in "<<v.__repr__()<<"\n";
 				//std::set<Line2*>& lines_of_vertex=vmap[v];
 				//lines_of_vertex.insert(&*ita);
 				//lines_of_vertex.insert(&*itb);
 				lmap[&*ita].insert(v);
 				lmap[&*itb].insert(v);
 				vertices.insert(v);
+				isect_vert.insert(v);
 			}
 		}
 		//start and end vertex of line
@@ -470,6 +577,10 @@ void BooleanOp::step2_intersect_lines()
 		assert(lmapcont.size()>=2);
 		//vmap[start].insert(&*ita);
 		//vmap[end].insert(&*ita);
+	}
+	BOOST_FOREACH(Vertex v,isect_vert)
+	{
+		//printf("Intersect vertex: %s\n",v.__repr__().c_str());
 	}
 	BOOST_FOREACH(auto c,lmap)
 	{
@@ -572,7 +683,10 @@ void BooleanOp::step7_classify_cells(BooleanOpStrategy* strat)
 {
 	BOOST_FOREACH(Cell* cell,cells)
 	{
-		cell->classification=strat->evaluate(*cell);
+		if (cell->cover.size()==0)
+			cell->classification=VOID;
+		else
+			cell->classification=strat->evaluate(*cell);
 	}
 }
 BooleanUpResult BooleanOrStrategy::evaluate(const Cell& cell)
@@ -585,9 +699,10 @@ std::string Cell::get_classification()
 {
 	switch(classification)
 	{
-	case NONE: return "NONE";
 	case HOLE: return "HOLE";
 	case SOLID: return "SOLID";
+	case VOID: return "VOID";
+	case UNCLASSIFIED: return "UNCLASSIFIED";
 	default:
 		throw std::runtime_error("unexpected error in get_classification");
 	}
@@ -625,7 +740,7 @@ void BooleanOp::step8_merge_cells()
 	BOOST_FOREACH(Cell* cell,cells)
 	{
 		if (cell->merged_poly!=-1) continue; //Already merged
-		printf("Restart with cell %s\n",cell->__repr__().c_str());
+		//printf("Restart with cell %s\n",cell->__repr__().c_str());
 		int cur_poly=num_merged_polys;
 		++num_merged_polys;
 		std::set<Cell*> merge_front;
@@ -633,26 +748,26 @@ void BooleanOp::step8_merge_cells()
 		while(!merge_front.empty())
 		{
 			std::set<Cell*> next_merge_front;
-			printf("Rerunning through merge front, %d items\n",(int)merge_front.size());
+			//printf("Rerunning through merge front, %d items\n",(int)merge_front.size());
 			BOOST_FOREACH(auto mergecell,merge_front)
 			{
-				printf("Merging %s\n======================\n",
-						mergecell->__repr__().c_str());
+				//printf("Merging %s\n======================\n",
+				//		mergecell->__repr__().c_str());
 				if (mergecell->merged_poly!=-1) continue;
 				mergecell->merged_poly=cur_poly;
 				BOOST_FOREACH(auto neighitem,mergecell->neighbors)
 				{
 					Cell* neighcell=neighitem.first;
-					printf("Considering %s\n",
-						neighcell->__repr__().c_str());
+					//printf("Considering %s\n",
+					//	neighcell->__repr__().c_str());
 					if (neighcell->merged_poly==-1 && neighcell->classification==cell->classification)
 					{
-						printf("Added it\n");
+						//printf("Added it\n");
 						next_merge_front.insert(neighcell);
 					}
 					else
 					{
-						printf("Did not add it\n");
+						//printf("Did not add it\n");
 					}
 				}
 			}

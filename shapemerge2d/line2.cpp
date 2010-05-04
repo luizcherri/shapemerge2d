@@ -20,15 +20,15 @@ void Line2::add_tag(int tag)
 {
 	tags.insert(tag);
 }
-bool Line2::operator==(const Line2& o)
+bool Line2::operator==(const Line2& o) const
 {
 	return v1==o.v1 && v2==o.v2;
 }
-bool Line2::operator!=(const Line2& o)
+bool Line2::operator!=(const Line2& o) const
 {
 	return !(v1==o.v1 && v2==o.v2);
 }
-bool Line2::operator<(const Line2& o)
+bool Line2::operator<(const Line2& o) const
 {
 	if (v1<o.v1)
 		return true;
@@ -143,7 +143,7 @@ Line2::Line2(const Vertex& pv1, const Vertex& pv2) :
 	if (x2!=x1)
 		k = (y2 - y1) / (x2 - x1);
 	else
-		k=0;
+		k = 0;
 	m = y1 - k * x1;
 
 }
@@ -152,6 +152,7 @@ Line2::Line2(const Vertex& pv1, const Vertex& pv2,
 	v1(pv1),v2(pv2),k(pk),m(pm)
 {
 }
+
 Line2 Line2::reversed() const
 {
 	Line2 l=*this;
@@ -167,6 +168,22 @@ bool Line2::is_vertical() const
 Rational Line2::get_k() const
 {
 	return k;
+}
+Rational Line2::get_m() const
+{
+	return m;
+}
+
+bool Line2::is_on_line(Vertex v)const
+{
+    int y1=0,y2=0;    
+    if (get_yrange(v.x,y1,y2))
+    {
+        assert(y1<=y2);
+        if (v.y>=y1 && v.y<=y2)
+            return true;
+    }
+    return false;
 }
 
 bool Line2::get_yrange(int x,int& inty1,int& inty2) const
@@ -192,7 +209,7 @@ bool Line2::get_yrange(int x,int& inty1,int& inty2) const
 			return false;
 		}
 	}
-
+	assert(!is_vertical());
 	Rational ry1=k * x + m;
 	Rational ry2=k * (x+1) + m;
 	//printf("ry1: %f, ry2: %f\n",todouble(ry1),todouble(ry2));
@@ -248,8 +265,8 @@ std::vector<Vertex> Line2::slow_all_vertices() const
 }
 std::vector<Vertex> Line2::intersection_points(const Line2& o) const
 {
-	printf("New intersect------------------------\n");
-	printf("a: %s, b: %s\n",__repr__().c_str(),o.__repr__().c_str());
+	//printf("New intersect------------------------\n");
+	//printf("a: %s, b: %s\n",__repr__().c_str(),o.__repr__().c_str());
 	const Rational kA = k;
 	const Rational mA = m;
 	const Rational kB = o.k;
@@ -259,15 +276,17 @@ std::vector<Vertex> Line2::intersection_points(const Line2& o) const
 					  std::min((o.v1.x),(o.v2.x)));
 	const int maxx=std::min(std::max((v1.x),(v2.x)),
 					  std::max((o.v1.x),(o.v2.x)));
+	//printf("minx: %d, maxx: %d\n",minx,maxx);
 	if (minx>maxx)
 		return std::vector<Vertex>(); //no intersection
 	int ix1=0,ix2=0;
 
-	if (kA==kB)
+	if (kA==kB && is_vertical()==o.is_vertical())
 	{
+		//printf("kA==kB\n");
 		if (absolute(mA-mB)>1)
 		{
-			printf("Parallel lines too far apart\n");
+			//printf("Parallel lines too far apart\n");
 			return std::vector<Vertex>(); //no intersection
 		}
 		ix1=minx;
@@ -280,6 +299,7 @@ std::vector<Vertex> Line2::intersection_points(const Line2& o) const
 	}
 	else
 	{
+		assert(is_vertical()==false && o.is_vertical()==false);
 		double dmA=todouble(mA);
 		double dmB=todouble(mB);
 		double dkA=todouble(kA);
@@ -290,11 +310,11 @@ std::vector<Vertex> Line2::intersection_points(const Line2& o) const
 		double size=fabs(dmA)+fabs(dmB)+fabs(dkA)+fabs(dkB);
 		double fx1=std::min(fxa,fxb)-(1e-7)*size;
 		double fx2=std::max(fxa,fxb)+(1e-7)*size;
-		printf("Ideal x intersect limits: %f %f\n",fx1,fx2);
+		//printf("Ideal x intersect limits: %f %f\n",fx1,fx2);
 		ix1=floor(fx1);
 		ix2=floor(fx2);
-		printf("Minx/Maxx: %d %d\n",minx,maxx);
-		printf("Integer x intersect limits: %d %d\n",ix1,ix2);
+		//printf("Minx/Maxx: %d %d\n",minx,maxx);
+		//printf("Integer x intersect limits: %d %d\n",ix1,ix2);
 		if (ix1<minx) ix1=minx;
 		if (ix1>maxx) ix1=maxx;
 		if (ix2<minx) ix2=minx;
@@ -308,7 +328,7 @@ std::vector<Vertex> Line2::intersection_points(const Line2& o) const
 	if (o.v1.y>o.v2.y) slopeB=-1;
 	if (o.v2.x<o.v1.x) slopeB*=-1;
 
-	printf("ix1: %d, ix2: %d, slopeA: %d, slopeB: %d\n",ix1,ix2,slopeA,slopeB);
+	//printf("ix1: %d, ix2: %d, slopeA: %d, slopeB: %d\n",ix1,ix2,slopeA,slopeB);
 	assert(ix2>=ix1);
 	Vertex v[2];
 	for(int iter=0;iter<2;++iter)
@@ -326,14 +346,14 @@ std::vector<Vertex> Line2::intersection_points(const Line2& o) const
 				throw std::runtime_error("Unexpected error line2.cpp #1");
 			if (!o.get_yrange(x,yb1,yb2))
 				throw std::runtime_error("Unexpected error line2.cpp #2");
-			printf("%d: yA: %d-%d, yB: %d-%d\n",x,ya1,ya2,yb1,yb2);
+			//printf("%d: yA: %d-%d, yB: %d-%d\n",x,ya1,ya2,yb1,yb2);
 			assert(yb2>=yb1);
 			assert(ya2>=ya1);
 			if (yb1<=ya2 && yb2>=ya1)
 			{ //overlaps
 				int yhi=std::min(yb2,ya2);
 				int ylo=std::max(yb1,ya1);
-				printf("yhi: %d, ilo: %d\n",yhi,ylo);
+				//printf("yhi: %d, ilo: %d\n",yhi,ylo);
 				if (slopeA>0)
 				{
 					if (iter==0)
@@ -361,13 +381,13 @@ std::vector<Vertex> Line2::intersection_points(const Line2& o) const
 		}
 		if (!found)
 		{
-			printf("No intersection found\n");
+			//printf("No intersection found\n");
 			return  std::vector<Vertex>(); //no intersection
 		}
 	}
-	printf("!! The found vertices: %s %s\n",
+	/*printf("!! The found vertices: %s %s\n",
 			v[0].__repr__().c_str(),
-			v[1].__repr__().c_str());
+			v[1].__repr__().c_str());*/
 	std::vector<Vertex> ip;
 	ip.push_back(v[0]);
 	ip.push_back(v[1]);
@@ -396,22 +416,22 @@ std::vector<Line2> Line2::intersect(const Line2& o) const
 			a_rev ? v[1] : v[0],
 			a_rev ? v[0] : v[1],
 			la_begin,la_middle,la_end);
-	printf("Did split la %s into %s and %s and %s\n",
+	/*printf("Did split la %s into %s and %s and %s\n",
 			la.__repr__().c_str(),
 			la_begin.__repr__().c_str(),
 			la_middle.__repr__().c_str(),
 			la_end.__repr__().c_str()
-			);
+			);*/
 	lb.split3(
 			b_rev ? v[1] : v[0],
 			b_rev ? v[0] : v[1],
 			lb_begin,lb_middle,lb_end);
-	printf("Did split lb %s into %s and %s and %s\n",
+	/*printf("Did split lb %s into %s and %s and %s\n",
 			lb.__repr__().c_str(),
 			lb_begin.__repr__().c_str(),
 			lb_middle.__repr__().c_str(),
 			lb_end.__repr__().c_str()
-			);
+			);*/
 
 	std::vector<Line2> out;
 	out.push_back(la_middle);
@@ -423,12 +443,12 @@ std::vector<Line2> Line2::intersect(const Line2& o) const
 }
 void Line2::split(const Vertex& x,Line2& a,Line2& b) const
 {
-	printf("Splitting line %s at %s\n",
+	/*printf("Splitting line %s at %s\n",
 			__repr__().c_str(),
-			x.__repr__().c_str());
+			x.__repr__().c_str());*/
 	int y1=0,y2=0;
 	bool ret=get_yrange(x.x,y1,y2);
-	printf("Yrange at x=%d: %d-%d\n",x.x,y1,y2);
+	//printf("Yrange at x=%d: %d-%d\n",x.x,y1,y2);
 	assert(ret);
 	assert(y1<=y2);
 	assert(x.y>=y1 && x.y<=y2);
@@ -439,17 +459,17 @@ void Line2::split(const Vertex& x,Line2& a,Line2& b) const
 }
 void Line2::split3(const Vertex& x,const Vertex& y,Line2& a,Line2& b,Line2& c) const
 {
-	printf("Splitting line %s at %s and %s\n",
+	/*printf("Splitting line %s at %s and %s\n",
 			__repr__().c_str(),
 			x.__repr__().c_str(),
 			y.__repr__().c_str()
-			);
+			);*/
 	int begin_y1=0,begin_y2=0;
 	bool begin_ret=get_yrange(x.x,begin_y1,begin_y2);
-	printf("Yrange at x=%d: %d-%d\n",x.x,begin_y1,begin_y2);
+	//printf("Yrange at x=%d: %d-%d\n",x.x,begin_y1,begin_y2);
 	int end_y1=0,end_y2=0;
 	bool end_ret=get_yrange(y.x,end_y1,end_y2);
-	printf("Yrange at x=%d: %d-%d\n",y.x,end_y1,end_y2);
+	//printf("Yrange at x=%d: %d-%d\n",y.x,end_y1,end_y2);
 	assert(begin_ret);
 	assert(begin_y1<=begin_y2);
 	assert(end_ret);

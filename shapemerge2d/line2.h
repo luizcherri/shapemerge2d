@@ -46,14 +46,14 @@ public:
 
 	bool is_vertical() const;
 	Rational get_k() const;
+	Rational get_m() const;
 	Line2();
 	Line2(const Vertex& v1,const Vertex& v2);
 	Line2(const Vertex& v1,const Vertex& v2,
-			const Rational& k,const Rational& m
-			);
-	bool operator==(const Line2& o);
-	bool operator!=(const Line2& o);
-	bool operator<(const Line2& o);
+		  const Rational& k,const Rational& m);
+	bool operator==(const Line2& o) const;
+	bool operator!=(const Line2& o) const;
+	bool operator<(const Line2& o) const;
 	void add_tag(int tag);
 	void add_tags(const std::set<int>& newtags);
 	int __hash__() const
@@ -118,7 +118,7 @@ public:
 			return ret;
 		}
 
-
+    bool is_on_line(Vertex v)const;
 	bool get_yrange(int x,int& y1,int& y2) const;
 	std::vector<int> get_yrange(int x) const
 	{
@@ -139,6 +139,7 @@ public:
 	 *  * start of line b
 	 *  * end of line a
 	 *  * end of line b
+	 * Otherwise, an empty vector is returned.
 	 */
 	std::vector<Line2> intersect(const Line2& o) const;
 

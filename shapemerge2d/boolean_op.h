@@ -27,9 +27,9 @@ struct SortAlongLine
 #endif
 enum BooleanUpResult
 {
-	NONE, //generate no polygon for this (a hole bordering the void)
 	HOLE,
 	SOLID,
+	VOID, //The stuff outside of all the polygons, beyond the borders of the polygon-populated world
 	UNCLASSIFIED
 };
 
@@ -39,6 +39,7 @@ struct Cell
 #ifndef SWIG
 	std::set<Edge*> edges;
 	std::set<const Polygon*> cover;
+	bool cover_determined;
 	/**
 	 * All neighbors, and for each neighbor, the set
 	 * of edges by which that neighboring cell is adjacent
@@ -49,7 +50,7 @@ struct Cell
 	int merged_poly;
 
 #endif
-	Cell(){classification=UNCLASSIFIED;merged_poly=-1;}
+	Cell(){cover_determined=false;classification=UNCLASSIFIED;merged_poly=-1;}
 	///Calculate the approximate center point of the
 	///cell. This can only be used for heuristics,
 	///since the center point is not really well-defined.
@@ -57,6 +58,7 @@ struct Cell
 	//Vertex approx_center() const;
 	//Vertex leftmost_vertex() const;
 	int get_merged_poly(){return merged_poly;}
+	Vertex get_leftmost();
 	std::vector<Edge> dbg_get_edges();
 	std::vector<std::string> get_shapes();
 	std::vector<Cell> get_neighbors();
@@ -80,6 +82,7 @@ struct Edge
 		line_k=0;
 	}
 #endif
+	std::string __repr__() const;
 	double get_k_approx()const{return line_k.numerator()/double(line_k.denominator());}
 	bool get_is_vertical()const{return line_is_vertical;}
 	Vertex get_v1()const{return v1;}
@@ -105,12 +108,28 @@ struct VertexPair
 #endif
 	Vertex get_v1()const{return v1;}
 	Vertex get_v2()const{return v2;}
+	inline Vertex smallest()const{
+		if (v1.x<v2.x) return v1;
+		if (v1.x>v2.x) return v2;
+		if (v1.y<v2.y) return v1;
+		return v2;
+	}
+	inline Vertex largest()const{
+		if (v1.x<v2.x) return v2;
+		if (v1.x>v2.x) return v1;
+		if (v1.y<v2.y) return v2;
+		return v1;
+	}
 	VertexPair(const Vertex& pv1,const Vertex& pv2) : v1(pv1),v2(pv2){}
 	bool operator<(const VertexPair& o) const
 	{
-		if (v1<o.v1) return true;
-		if (o.v1<v1) return false;
-		return v2<o.v2;
+		Vertex a=smallest();
+		Vertex b=largest();
+		Vertex oa=o.smallest();
+		Vertex ob=o.largest();
+		if (a<oa) return true;
+		if (oa<a) return false;
+		return b<ob;
 	}
 };
 struct BooleanOpStrategy
@@ -173,7 +192,7 @@ public:
 	 * you get back to the starting point. The thing you have encircled
 	 * is a _cell_.
 	 */
-	void step5_create_cells();
+	void step5_create_cells(); //TODO: Must be able to determine if a cell is within another cell (maybe separate step)
 	std::vector<Line2> dbg_step5_sort_edges(Vertex v,Line2 incoming,std::vector<Line2> sort,int side);
 	std::vector<Cell> dbg_step5_get_cells();
 	/**

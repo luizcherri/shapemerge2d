@@ -28,13 +28,22 @@ namespace shapemerge2d
 	class Shape
 	{
 		std::string name;
+		Shape(const Shape&);//noncopyable (Polygons have pointers to their shapes)
 	public:
 		Shape* get_this(){return this;}
 		const std::vector<Polygon>& get_polys();
 		Shape();
+		bool operator==(const Shape& o) const;
 		Shape(const std::string& name,const Polygon poly);
 		Shape(const std::string& name,const std::vector<Polygon>& poly);
+		/**
+		 * Shortcut to create a shape of only one polygon,
+		 * that polygon being solid.
+		 */
+		Shape(const std::string& name,const std::vector<Vertex>& poly);
 		const std::string& get_name()const{return name;}
+		std::string __repr__()const;
+		std::string dump() const;
 	private:
 		std::vector<Polygon> polys;
 	};

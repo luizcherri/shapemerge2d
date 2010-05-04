@@ -82,7 +82,7 @@ class NondirLine(object):
     def __repr__(self):
         return "NondirLine(%s,%s)"%(self.v1,self.v2)
     
-def test_add_lines():
+def vistest_add_lines():
     #print "Press any key when debugger ready"
     #raw_input()
     bo=BooleanOp()
@@ -94,12 +94,12 @@ def test_add_lines():
         Vertex(3,3),Vertex(1,3)]))
     shape_a=Shape("shape_a",poly_a)
     shape_b=Shape("shape_b",poly_b)
-    print "Shape_a,shape_b: ",shape_a,shape_b
+    #print "Shape_a,shape_b: ",shape_a,shape_b
     bo.step1_add_lines(shape_a,shape_b)
     bo.step2_intersect_lines()
     lines=list(bo.dbg_step2_get_split_lines())
-    print "The found, split lines:"
-    print "\n".join(str(x) for x in lines)
+    #print "The found, split lines:"
+    #print "\n".join(str(x) for x in lines)
     assert len(lines)==12
     assert Line2(Vertex(0,0),Vertex(2,0)) in lines
     assert Line2(Vertex(2,0),Vertex(2,1)) in lines
@@ -145,11 +145,16 @@ def test_add_lines():
             
     bo.step5_create_cells()
     cells=list(bo.dbg_step5_get_cells())
-    print "Cells:\n","\n".join(str(x) for x in cells)
+    #print "Cells:\n","\n".join(str(x) for x in cells)
     def lineset(*vertices):
         s=set()
         for v1,v2 in zip(vertices,vertices[1:]+vertices[:1]):
             s.add(NondirLine(v1,v2))
+        return frozenset(s)
+    def lineset2(*vertices):
+        s=set()
+        for v1,v2 in zip(vertices,vertices[1:]+vertices[:1]):
+            s.add(Line2(v1,v2))
         return frozenset(s)
             
     facit_cells={
@@ -161,7 +166,7 @@ def test_add_lines():
                  lineset(Vertex(0,0),Vertex(2,0),Vertex(2,1),Vertex(1,1),
                          Vertex(1,2),Vertex(0,2)):"lower_left"
                  }
-    print "Facit cells","\n".join(str(x) for x in facit_cells.keys())
+    #print "Facit cells","\n".join(str(x) for x in facit_cells.keys())
     assert len(cells)==4
     
     for cell in cells:
@@ -194,11 +199,11 @@ def test_add_lines():
             'upper_right':('shape_b',),
             'outline':()
             }
-        print "Facit:",facit_cell_shapes[realcellname]
-        print "Actual:",tuple(shapes)
+        #print "Facit:",facit_cell_shapes[realcellname]
+        #print "Actual:",tuple(shapes)
         assert facit_cell_shapes[realcellname]==tuple(shapes)
             
-        print "Cell: %s, shapes: %s"%(realcellname,", ".join(shapes))
+        #print "Cell: %s, shapes: %s"%(realcellname,", ".join(shapes))
     
     bas=BooleanOrStrategy()
     bo.step7_classify_cells(bas)
@@ -212,9 +217,9 @@ def test_add_lines():
             'lower_left':'SOLID',
             'center':'SOLID',
             'upper_right':'SOLID',
-            'outline':'HOLE'
+            'outline':'VOID'
             }
-        print "Cell %s classification: %s"%(realcellname,cell.get_classification())
+        #print "Cell %s classification: %s"%(realcellname,cell.get_classification())
         assert cell.get_classification()==facit_cell_kind[realcellname]
         
     bo.step8_merge_cells()
@@ -234,14 +239,501 @@ def test_add_lines():
             'outline':1
             }
         realcellname=lookup_cellname(cell)
-        print "Cell %s merged_poly: %s, class: %s"%(realcellname,cell.get_merged_poly(),cell.get_classification())
-        print "%s: Neighbors:"%realcellname," ".join(lookup_cellname(ce) for ce in cell.get_neighbors())
+        #print "Cell %s merged_poly: %s, class: %s"%(realcellname,cell.get_merged_poly(),cell.get_classification())
+        #print "%s: Neighbors:"%realcellname," ".join(lookup_cellname(ce) for ce in cell.get_neighbors())
         assert cell.get_merged_poly()==facit_cell_merged[realcellname]
     
     bo.step9_calc_result()
     shape=bo.step9_get_result()
     polys=list(shape.get_polys())
-    for polycnt,poly in izip(count(),polys):
-        print "Poly #%d: %s %s"%(polycnt,poly.get_kind_str(),list(poly.get_lines()))
+    assert len(polys)==1
+    poly,=polys
     
+    "Poly: %s %s"%(poly.get_kind_str(),list(poly.get_lines()))
+    assert poly.get_kind_str()=="SOLID"
+    plines=frozenset(poly.get_lines())
+    should=lineset2(Vertex(0,0),Vertex(2,0),Vertex(2,1),Vertex(3,1),
+                         Vertex(3,3),Vertex(1,3),Vertex(1,2),Vertex(0,2))
+    #print "Is: ",plines
+    #print "Should: ",should
+    assert plines==should
+                            
+    sqs=[]
+    for line in plines:
+        sqs.append(visualize.Line(
+            line.get_v1().get_x(),
+            line.get_v1().get_y(),
+            line.get_v2().get_x(),
+            line.get_v2().get_y(),                       
+            (255,0,0)))
+    draw_things(sqs)
+                
+
+
+def test_edge_sort():
+    b=BooleanOp()
+    v=vorig(0,0)
+    for x in xrange(100):
+        if x==0:
+            ang=0
+        else:
+            ang=x/6.0
+        def Vertex(a,b):
+            x=a*cos(ang)-b*sin(ang)
+            y=b*cos(ang)+a*sin(ang)
+            return vorig(int(x),int(y))
+        for side in [0,1]: 
+            l=Line2(Vertex(-10,0),Vertex(0,0))
+            tosort=lvector([
+                    Line2(Vertex(0,0),Vertex(-10,10)),
+                    Line2(Vertex(0,0),Vertex(0,10)),
+                    Line2(Vertex(0,0),Vertex(10,10))])
+            out=list(b.dbg_step5_sort_edges(v,l,tosort,side))
+            if side==0:
+                assert out[0]==Line2(Vertex(0,0),Vertex(-10,10))
+                assert out[1]==Line2(Vertex(0,0),Vertex(0,10))
+                assert out[2]==Line2(Vertex(0,0),Vertex(10,10))
+            else:
+                assert out[2]==Line2(Vertex(0,0),Vertex(-10,10))
+                assert out[1]==Line2(Vertex(0,0),Vertex(0,10))
+                assert out[0]==Line2(Vertex(0,0),Vertex(10,10))
+                
+            tosort=lvector([
+                    Line2(Vertex(0,0),Vertex(-10,10)),
+                    Line2(Vertex(0,10),Vertex(0,0)),
+                    Line2(Vertex(0,0),Vertex(10,10))])
+            out=list(b.dbg_step5_sort_edges(v,l,tosort,side))
+            if side==0:
+                assert out[0]==Line2(Vertex(0,0),Vertex(-10,10))
+                assert out[1]==Line2(Vertex(0,10),Vertex(0,0))
+                assert out[2]==Line2(Vertex(0,0),Vertex(10,10))
+            else:
+                assert out[2]==Line2(Vertex(0,0),Vertex(-10,10))
+                assert out[1]==Line2(Vertex(0,10),Vertex(0,0))
+                assert out[0]==Line2(Vertex(0,0),Vertex(10,10))
+                
+            tosort=lvector([
+                    Line2(Vertex(-10,10),Vertex(0,0)),
+                    Line2(Vertex(0,10),Vertex(0,0)),
+                    Line2(Vertex(0,0),Vertex(10,10))])
+            out=list(b.dbg_step5_sort_edges(v,l,tosort,side))
+            if side==0:
+                assert out[0]==Line2(Vertex(-10,10),Vertex(0,0))
+                assert out[1]==Line2(Vertex(0,10),Vertex(0,0))
+                assert out[2]==Line2(Vertex(0,0),Vertex(10,10))
+            else:
+                assert out[2]==Line2(Vertex(-10,10),Vertex(0,0))
+                assert out[1]==Line2(Vertex(0,10),Vertex(0,0))
+                assert out[0]==Line2(Vertex(0,0),Vertex(10,10))
+                
+
+class NondirLine(object):
+    def __init__(self,v1,v2):
+        self.v1,self.v2=v1,v2
+    def __hash__(self):
+        return self.v1.get_x()+self.v2.get_x()+\
+                self.v1.get_y()+self.v2.get_y()
+    def __eq__(self,o):
+        if self.v1==o.v1 and self.v2==o.v2:
+            return True
+        if self.v1==o.v2 and self.v2==o.v1:
+            return True
+        return False
+    def get_v1(self):
+        return self.v1
+    def get_v2(self):
+        return self.v2
+    def __repr__(self):
+        return "NondirLine(%s,%s)"%(self.v1,self.v2)
+def dump_cells(bo):
+    for cell in list(bo.dbg_step5_get_cells()):
+        sqs=[]
+        for edge in list(cell.dbg_get_edges()):
+            line=Line2(edge.get_v1(),edge.get_v2())
+            sqs.append(visualize.Line(
+                line.get_v1().get_x(),
+                line.get_v1().get_y(),
+                line.get_v2().get_x(),
+                line.get_v2().get_y(),                       
+                (255,0,0)))
+        #print "Cell cover:",list(cell.get_shapes())
+        #print "Cell type:",cell.get_classification()
+        draw_things(sqs)
+       
+def merge_shapes(shape_a,shape_b,vis=False):
+    bo=BooleanOp()
+    #print "Shape_a,shape_b: ",shape_a,shape_b
+    bo.step1_add_lines(shape_a,shape_b)
+    bo.step2_intersect_lines()
+    
+    bo.step3_create_edges()
+    bo.step4_eliminate_deadends()    
+    bo.step5_create_cells()
+    #dump_cells(bo)
+    bo.step6_determine_cell_cover()
+        
+    bas=BooleanOrStrategy()
+    bo.step7_classify_cells(bas)
+    bo.step8_merge_cells()
+    bo.step9_calc_result()
+    shape=bo.step9_get_result()
+    polys=list(shape.get_polys())
+    if vis:
+        plines=set()
+        for poly in polys:
+            #print "Poly: %s %s"%(poly.get_kind_str(),list(poly.get_lines()))
+            plines=plines.union(frozenset(poly.get_lines()))
+        sqs=[]
+        for line in plines:
+            sqs.append(visualize.Line(
+                line.get_v1().get_x(),
+                line.get_v1().get_y(),
+                line.get_v2().get_x(),
+                line.get_v2().get_y(),                       
+                (255,0,0)))
+        draw_things(sqs)    
+    return shape
+
+def position_line(s,match):
+    
+    for line,ypos in izip(s.split("\n"),count()):
+        for c,xpos in izip(line,count()):
+            if match==c:
+                if xpos<min[0]: min[0]=xpos
+                if xpos>max[0]: max[0]=xpos
+                if ypos<min[1]: min[1]=ypos
+                if ypos>max[1]: max[1]=ypos
+    return Line2(Vertex(min[0],min[1]),Vertex(max[0],max[1]))
+
+def pyshape(name,data):
+    assert data.count("\t")==0
+    xpos=1
+    ypos=data.count("\n")
+    chs=dict()
+    for c in data:
+        if c=='\t': raise Exception("tab not allowed")
+        if c=='\n': 
+            xpos=1
+            ypos-=1
+        else:
+            if c!=' ':
+                chs.setdefault(c,[]).append((xpos,ypos))
+            xpos+=1
+    lines=[]
+    for c,poss in chs.items():
+        endpoints=[]
+        for pos in poss:
+            cnt=0
+            for aroundx in [-1,0,1]:
+                for aroundy in [-1,0,1]:
+                    if aroundx==0 and aroundy==0: continue
+                    if (pos[0]+aroundx,pos[1]+aroundy) in poss:
+                        cnt+=1
+            if cnt==1:
+                endpoints.append(Vertex(*pos))
+        assert(len(endpoints)==2)
+        lines.append((c,Line2(endpoints[0],endpoints[1])))
+    lines.sort()
+    #print "C,poss: ",lines
+    outv=[]
+    last=None
+    for (n1,line1),(n2,line2) in izip(lines,lines[1:]+lines[:1]):
+        if not ((line1.get_v2()-line2.get_v1()).taxilength()==1 or (line1.get_v2()-line2.get_v2()).taxilength()==1):
+            line1=Line2(line1.get_v2(),line1.get_v1())            
+        if (line1.get_v2()-line2.get_v1()).taxilength()==1:
+            outline=Line2(line1.get_v1(),line2.get_v1())
+        elif (line1.get_v2()-line2.get_v2()).taxilength()==1:
+            outline=Line2(line1.get_v1(),line2.get_v2())
+        else:
+            raise Exception("Unexpected error - bad input-data?")
+        #print "Line: %s:%s"%(n1,outline)
+        outv.append(outline.get_v1())
+    return Shape(name,vvector(outv))
+        
+    
+def test_verify_shape1():
+    input1=pyshape("leftbox",\
+"""
+DCCCCCCCCCC
+D         B
+D         B
+D         B
+D         B
+D         B
+AAAAAAAAAAB
+""")
+    input2=pyshape("rightbox",\
+"""
+   DCCCCCCCCCC
+   D         B
+   D         B
+   D         B
+   D         B
+   D         B
+   AAAAAAAAAAB
+""")
+    
+    should_output=pyshape("resultbox",\
+"""
+DCCCCCCCCCCCCC
+D            B
+D            B
+D            B
+D            B
+D            B
+AAAAAAAAAAAAAB
+""")
+    real_output=merge_shapes(input1,input2,False)    
+    assert should_output==real_output
+    
+def test_verify_shape2():
+    input1=pyshape("leftbox",\
+"""
+DCCCCCCCCCCCC
+D           B
+D           B
+D           B
+D           B
+D           B
+AAAAAAAAAAAAB
+""")
+    input2=pyshape("rightbox",\
+"""
+   DCCCCCCCCCC
+   D         B
+   D         B
+   D         B
+   D         B
+   D         B
+   AAAAAAAAAAB
+""")
+    
+    should_output=pyshape("resultbox",\
+"""
+DCCCCCCCCCCCCC
+D            B
+D            B
+D            B
+D            B
+D            B
+AAAAAAAAAAAAAB
+""")
+    real_output=merge_shapes(input1,input2,False)    
+    assert should_output==real_output
+
+
+def test_verify_shape3():
+    input1=pyshape("leftbox",\
+"""
+DCCCCCCCCCCCCC
+D            B
+D            B
+D            B
+D            B
+D            B
+AAAAAAAAAAAAAB
+""")
+    input2=pyshape("rightbox",\
+"""
+   DCCCCCCCCCC
+   D         B
+   D         B
+   D         B
+   D         B
+   D         B
+   AAAAAAAAAAB
+""")
+    
+    should_output=pyshape("resultbox",\
+"""
+DCCCCCCCCCCCCC
+D            B
+D            B
+D            B
+D            B
+D            B
+AAAAAAAAAAAAAB
+""")
+    real_output=merge_shapes(input1,input2,False)    
+    assert should_output==real_output
+
+
+def test_verify_shape4():
+    input1=pyshape("leftbox",\
+"""
+FEEEEEEEEEEEEEEEEEEE
+F                  D
+F                  D
+F            CCCCCCD
+F            B
+F            B
+AAAAAAAAAAAAAB
+""")
+    input2=pyshape("rightbox",\
+"""
+   DCCCCCCCCCC
+   D         B
+   D         B
+   D         B
+   D         B
+   D         B
+   AAAAAAAAAAB
+""")
+    
+    should_output=pyshape("resultbox",\
+"""
+FEEEEEEEEEEEEEEEEEEE
+F                  D
+F                  D
+F            CCCCCCD
+F            B
+F            B
+AAAAAAAAAAAAAB
+""")
+    real_output=merge_shapes(input1,input2,False)    
+    assert should_output==real_output
+
+
+def test_verify_shape5():
+    input1=pyshape("leftbox",\
+"""
+FEEEEEEEEEEEEEEEEEEE
+F                  D
+F                  D
+F            CCCCCCD
+F            B
+F            B
+AAAAAAAAAAAAAB
+""")
+    input2=pyshape("rightbox",\
+"""
+   DCCCCCCCCCC
+   D         B
+   D         B
+   D         B
+   D         B
+   D         B
+   D         B
+   D         B
+   AAAAAAAAAAB
+""")
+    
+    should_output=pyshape("resultbox",\
+"""
+   HGGGGGGGGGG
+   H         F
+JIII         FEEEEEE
+J                  D
+J                  D
+J            CCCCCCD
+J            B
+J            B
+AAAAAAAAAAAAAB
+""")
+    real_output=merge_shapes(input1,input2,False)    
+    assert should_output==real_output
+
+
+
+
+
+
+
+        
+        
+    
+def vistest_merge_shapes():    
+    for x in xrange(10):
+        x=5
+        poly_a=Polygon(vvector([
+            Vertex(0+x,0),Vertex(2+x,0),
+            Vertex(2+x,2),Vertex(0+x,2)]))
+        poly_b=Polygon(vvector([
+            Vertex(1,1),Vertex(3,1),
+            Vertex(3,4),Vertex(1,4)]))
+        shape_a=Shape("shape_a",poly_a)
+        shape_b=Shape("shape_b",poly_b)
+        #   OOOO
+        #   OOOO
+        # OOOOOO
+        # OOOO
+        # OOOO
+        bo=BooleanOp()
+        #print "Shape_a,shape_b: ",shape_a,shape_b
+        bo.step1_add_lines(shape_a,shape_b)
+        bo.step2_intersect_lines()
+        splitset=set([NondirLine(x.get_v1(),x.get_v2()) for x in bo.dbg_step2_get_split_lines()])
+        #print "Split result: %s"%("\n".join(str(l) for l in splitset),)
+        assert not NondirLine(Vertex(0,2),Vertex(2,2)) in splitset
+                
+            
+        bo.step3_create_edges()
+        edges=list(bo.dbg_step3_and_4_get_edges())
+        nondiredges=list(NondirLine(x.get_v1(),x.get_v2()) for x in bo.dbg_step3_and_4_get_edges())
+         
+        sqs=[]
+        cnt=0
+        #print "Edges: %s"%(edges,)
+        for edge in edges:
+            line=Line2(edge.get_v1(),edge.get_v2())
+            r=(25*cnt)%128+128
+            g=(128*cnt)%128+128
+            b=(64*cnt)%128+128
+            sqs.append(visualize.Line(
+                line.get_v1().get_x(),
+                line.get_v1().get_y(),
+                line.get_v2().get_x(),
+                line.get_v2().get_y(),                       
+                (r,g,b)))
+            sqs.append(visualize.Square(
+                line.get_v1().get_x()-0.1,
+                line.get_v1().get_y()-0.1,
+                line.get_v1().get_x()+0.1,
+                line.get_v1().get_y()+0.1,
+                (r,g,b)))
+            cnt+=1
+        draw_things(sqs)
+        assert not (NondirLine(Vertex(0,2),Vertex(2,2)) in nondiredges)
+        
+        bo.step4_eliminate_deadends()    
+    
+        bo.step5_create_cells()
+        
+        bo.step6_determine_cell_cover()    
+        bas=BooleanOrStrategy()
+        bo.step7_classify_cells(bas)
+        for cell in list(bo.dbg_step5_get_cells()):
+            sqs=[]
+            for edge in list(cell.dbg_get_edges()):
+                line=Line2(edge.get_v1(),edge.get_v2())
+                sqs.append(visualize.Line(
+                    line.get_v1().get_x(),
+                    line.get_v1().get_y(),
+                    line.get_v2().get_x(),
+                    line.get_v2().get_y(),                       
+                    (255,0,0)))
+            #print "Cell cover:",list(cell.get_shapes())
+            #print "Cell type:",cell.get_classification()
+            draw_things(sqs)
+        
+        bo.step8_merge_cells()
+        bo.step9_calc_result()
+        shape=bo.step9_get_result()
+        polys=list(shape.get_polys())
+        plines=set()
+        for poly in polys:
+            #print "Poly: %s %s"%(poly.get_kind_str(),list(poly.get_lines()))
+            plines=plines.union(frozenset(poly.get_lines()))
+        sqs=[]
+        edges=set(bo.dbg_step3_and_4_get_edges())
+        for line in plines:
+            sqs.append(visualize.Line(
+                line.get_v1().get_x(),
+                line.get_v1().get_y(),
+                line.get_v2().get_x(),
+                line.get_v2().get_y(),                       
+                (0,200,0)))
+        draw_things(sqs)
+        
+        
     

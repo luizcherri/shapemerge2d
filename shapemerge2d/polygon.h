@@ -36,6 +36,7 @@ namespace shapemerge2d
 		{
 			this->shape=shape;
 		}
+		bool operator==(const Polygon& o)const;
 		std::string get_kind_str() const
 		{
 			switch(kind)
@@ -45,6 +46,7 @@ namespace shapemerge2d
 			}
 			throw std::runtime_error("Internal error in polygon");
 		}
+		std::string __repr__() const;
 		/**
 		 * Caller must ensure that polygon edges do not cross each other.
 		 * Edges may coincide, but not actually cross. (Consider a
@@ -73,6 +75,43 @@ namespace shapemerge2d
 		 */
 		Vertex lower_left_vertex() const;
 		const Shape* get_shape()const{return shape;}
+		
+		/**
+		 * Polygons should not double back on themselves and intersect. However,
+		 * saying that two non-neighbor edges cannot intersect is too strict.
+		 * Consider a long tapering V, ending in a single point. The two edges
+		 * ending at the point will be touching for quite some distances. Now
+		 * consider what happens if one of these edges are split into several 
+		 * small edges. They will now be overlapping non-neighbor edges.
+		 * 
+		 * However, there should at least not be more than one area encompassed
+		 * by the boundary of the polygon. There should be no 'loops', encircled
+		 * by edges, where the edges touches or intersects at the beginning of the loop.
+		 * (or rather, there should only be one such loop - the entire polygon).
+		 * TODO: Rephrase the definition of a loop above, to make it understandable.
+		 *		 
+		 * This routine removes all loops, leaving one arbitrarily chosen loop, if
+		 * multiple loops exist.		 
+		 */
+		Polygon remove_loops();
+
+        /**
+         * Return a set of lines, so that they are all contained within
+         * the polygon, and part of the original line 'line'.
+         * Only works on loop-free (non-self-overlapping), ccw polygons.
+         */		
+		std::vector<Line2> intersect_line(Line2 line);
+
+        bool is_inside(Vertex& v);		
+
+		/**
+		 * Nominal polygons have their vertices in a
+		 * counter clockwise order.
+		 */
+		bool is_ccw()const;
+
+		void merge_straight_sections();
+
 	private:
 		Kind kind;
 		const Shape* shape;
