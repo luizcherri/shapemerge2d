@@ -64,12 +64,21 @@ public:
 	int taxilen() const
 	{
 		int ret=std::abs(v1.x-v2.x)+std::abs(v1.y-v2.y);
-		printf("taxilen calc for %s: %d\n",
-				__repr__().c_str(),ret);
+		//printf("taxilen calc for %s: %d\n",
+		//		__repr__().c_str(),ret);
 		return ret;
 	}
 	std::vector<Vertex> slow_all_vertices() const;
 
+    /**
+     * Consider an infinite line which is a continuation of
+     * this line. Now consider the verte xv. If it is
+     * to the left of this line, return -1, if it is to
+     * the right, return +1, if it is _on_ the line, return
+     * 0.
+     */
+    int side_of_extrapolated_line(Vertex v) const;
+    
 	DbgFloatVertex dbg_point_on_line(Vertex at)const;
 	DbgFloatVertex dbg_fv1()const
 		{

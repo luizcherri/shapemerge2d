@@ -73,5 +73,28 @@ def test_remove_loops6():
     polyb=polya.remove_loops()
     print polyb
     assert polyb==Polygon(vvector([
-        Vertex(10,10),Vertex(15,10),Vertex(15,15),Vertex(10,15)]))
+        Vertex(10,10),Vertex(10,15),Vertex(15,15),Vertex(15,10)]))
 
+def test_inside_poly1():
+    polya=Polygon(vvector([
+        Vertex(0,0),Vertex(10,0),Vertex(10,10),Vertex(0,10)]))
+    assert not polya.is_inside(Vertex(5,11))
+    
+    assert polya.is_inside(Vertex(5,5))
+    assert polya.is_inside(Vertex(0,5))
+    assert polya.is_inside(Vertex(5,10))
+    assert not polya.is_inside(Vertex(-1,5))
+    assert not polya.is_inside(Vertex(11,5))
+def test_inside_poly2():
+    polya=Polygon(vvector([
+        Vertex(0,0),Vertex(0,5),Vertex(10,0),Vertex(10,10),Vertex(0,10)]))
+    assert polya.is_inside(Vertex(5,5))
+def test_inside_poly3():
+    polya=Polygon(vvector([
+        Vertex(0,0),Vertex(10,0),Vertex(10,10),Vertex(5,5),Vertex(0,10)]))
+    assert polya.is_inside(Vertex(7,5))
+    assert polya.is_inside(Vertex(5,5)) #on edge
+    assert polya.is_inside(Vertex(3,5))
+    assert not polya.is_inside(Vertex(5,7))
+    
+    

@@ -87,6 +87,90 @@ Line2::Line2() :
 		k(0),m(0)
 {
 }
+bool Line2::is_on_line(Vertex v)const
+{
+    int y1=0,y2=0;    
+    if (get_yrange(v.x,y1,y2))
+    {
+        assert(y1<=y2);
+        if (v.y>=y1 && v.y<=y2)
+            return true;
+    }
+    return false;
+}
+int Line2::side_of_extrapolated_line(Vertex v) const
+{
+    if (v1==v2)
+        throw std::runtime_error("The concept of being to the left or right of a zero-length line doesn't make sense");
+    if (is_vertical())
+    {
+        assert(v1.x==v2.x);
+        if (v1.y<v2.y)
+        { //line goes from low to high
+            if (v.x>v1.x) return +1; //right
+            if (v.x<v1.x) return -1; //left
+            return 0;
+        }
+        else
+        { //line goes from high to low
+            if (v.x>v1.x) return -1; //left
+            if (v.x<v1.x) return +1; //right
+            return 0;
+        }        
+    }
+    else
+    {
+	    assert(!is_vertical());
+	    assert(v1.x!=v2.x);
+	    bool reversed=(v1.x>v2.x);
+	    /*INT_MAX = k * (v.x) + m; => v.x=(INT_MAX-m)/k */
+        double approx_y1p=todouble(k) * v.x + todouble(m);
+        double approx_y2p=todouble(k) * (v.x+1) + todouble(m);
+        double approx_y1=std::min(approx_y1p,approx_y2p);
+        double approx_y2=std::max(approx_y1p,approx_y2p);
+        double epsilon=10;
+        if (v.y>approx_y2+epsilon) 
+        {
+            if (!reversed)
+                return -1;
+            else
+                return +1;
+        }
+        if (v.y<approx_y1-epsilon)
+        {
+            if (!reversed)
+                return +1;
+            else
+                return -1; 
+        }
+            
+	    
+	    Rational ry1=k * v.x + m;
+	    Rational ry2=k * (v.x+1) + m;
+	    int inty1=ratfloor(ry1);
+	    int inty2=ratfloor(ry2);
+	    if (inty1>inty2)
+		    std::swap(inty1,inty2);
+		if (v.y>inty2)
+		{
+		    if (!reversed)
+		        return -1;
+		    else
+		        return +1;
+		}
+		if (v.y<inty1)
+		{
+		    if (!reversed)
+		        return +1;
+		    else
+		        return -1;		    
+		}
+        assert(v.y>=inty1 && v.y<=inty2);
+        return 0;
+    }
+
+}
+
 DbgFloatVertex Line2::dbg_point_on_line(Vertex v)const
 {
 	if (v1.x==v2.x)
@@ -174,17 +258,6 @@ Rational Line2::get_m() const
 	return m;
 }
 
-bool Line2::is_on_line(Vertex v)const
-{
-    int y1=0,y2=0;    
-    if (get_yrange(v.x,y1,y2))
-    {
-        assert(y1<=y2);
-        if (v.y>=y1 && v.y<=y2)
-            return true;
-    }
-    return false;
-}
 
 bool Line2::get_yrange(int x,int& inty1,int& inty2) const
 {
@@ -283,6 +356,7 @@ std::vector<Vertex> Line2::intersection_points(const Line2& o) const
 
 	if (kA==kB && is_vertical()==o.is_vertical())
 	{
+	    //printf("Lines are parallell %d %d\n",int(is_vertical()),int(o.is_vertical()));
 		//printf("kA==kB\n");
 		if (absolute(mA-mB)>1)
 		{
@@ -296,6 +370,7 @@ std::vector<Vertex> Line2::intersection_points(const Line2& o) const
 	{ //one of the lines is vertical
 		ix1=minx;
 		ix2=maxx;
+		//printf("One of the lines is vertical\n");
 	}
 	else
 	{

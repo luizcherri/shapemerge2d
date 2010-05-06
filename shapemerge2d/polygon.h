@@ -102,7 +102,7 @@ namespace shapemerge2d
          */		
 		std::vector<Line2> intersect_line(Line2 line);
 
-        bool is_inside(Vertex& v);		
+        bool is_inside(Vertex v);		
 
 		/**
 		 * Nominal polygons have their vertices in a

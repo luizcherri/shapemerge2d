@@ -23,7 +23,7 @@ def visualize_diff(lines,extras=[]):
         sqs.append(Square(p.get_x()+0.1,p.get_y()+0.1,p.get_x()+0.9,p.get_y()+0.9,(R,G,B)))
                     
     for line,col in lines:
-        print "Drwaing Line:",line.get_x1_inexact(),\
+        print "Drawing Line:",line.get_x1_inexact(),\
             line.get_y1_inexact(),\
             line.get_x2_inexact(),\
             line.get_y2_inexact(),line.taxilen()
@@ -231,4 +231,43 @@ def test_intersection():
                                 (lb,(0,255,0))
                                 ])
             raise
-                  
+def test_side_of1():
+    l=Line2(Vertex(0,0),Vertex(10,0))    
+    assert l.side_of_extrapolated_line(Vertex(5,5))==-1
+    assert l.side_of_extrapolated_line(Vertex(5,-5))==1
+    assert l.side_of_extrapolated_line(Vertex(15,5))==-1
+    assert l.side_of_extrapolated_line(Vertex(15,-5))==1
+    assert l.side_of_extrapolated_line(Vertex(-5,5))==-1
+    assert l.side_of_extrapolated_line(Vertex(-5,-5))==1
+    assert l.side_of_extrapolated_line(Vertex(-5,0))==0
+    assert l.side_of_extrapolated_line(Vertex(5,0))==0
+    assert l.side_of_extrapolated_line(Vertex(15,0))==0
+    r=Line2(Vertex(10,0),Vertex(0,0))    
+    assert r.side_of_extrapolated_line(Vertex(5,5))==1
+    assert r.side_of_extrapolated_line(Vertex(5,-5))==-1
+    
+def test_side_of2():    
+    l=Line2(Vertex(0,0),Vertex(1,10))
+    assert l.side_of_extrapolated_line(Vertex(0,10))==-1
+    assert l.side_of_extrapolated_line(Vertex(1,0))==1
+    assert l.side_of_extrapolated_line(Vertex(1,8))==0
+    assert l.side_of_extrapolated_line(Vertex(0,2))==0
+
+def test_side_of3():    
+    l=Line2(Vertex(0,0),Vertex(1,1000000))
+    assert l.side_of_extrapolated_line(Vertex(1000000,0))==1
+    assert l.side_of_extrapolated_line(Vertex(-1000000,0))==-1
+    assert l.side_of_extrapolated_line(Vertex(0,100000))==0
+    assert l.side_of_extrapolated_line(Vertex(1000000,2000000))==1
+
+def test_side_of4():
+    l=Line2(Vertex(0,0),Vertex(0,10))    
+    assert l.side_of_extrapolated_line(Vertex(5,5))==1
+    assert l.side_of_extrapolated_line(Vertex(-5,5))==-1
+    assert l.side_of_extrapolated_line(Vertex(0,5))==0
+    r=Line2(Vertex(0,10),Vertex(0,0))    
+    assert r.side_of_extrapolated_line(Vertex(5,5))==-1
+    assert r.side_of_extrapolated_line(Vertex(-5,5))==1
+    assert r.side_of_extrapolated_line(Vertex(0,5))==0
+
+

@@ -2,6 +2,7 @@
 #include "line2.h"
 #include "math.h"
 #include "limits.h"
+#include "vector.h"
 
 namespace shapemerge2d
 {
@@ -99,11 +100,6 @@ Vertex Polygon::lower_left_vertex() const
 	}
 	return most;
 }
-struct ISect
-{
-    bool entering; //if false => is exiting
-    Vertex where;
-};
 
 /*
 std::vector<Line2> Polygon::intersect_line(Line2 line)
@@ -123,21 +119,161 @@ enum poly_sides
     start_side,
     other_side
 };
-bool Polygon::is_inside(Vertex& v)
+bool Polygon::is_inside(Vertex v)
 {
+    int startindex=-1;
+    int minx=INT_MAX;
+    int maxx=INT_MIN;
+    if (lines.empty())
+        return false;
     for(size_t i=0;i<lines.size();++i)
     {
         Line2& a=lines[i];
-        if (a.is_on_line(v))
-            return true; //vertex falls on an edge, by definition inside.
+        if (a.get_v1().get_x()<minx)
+            minx=a.get_v1().get_x();
+        if (a.get_v1().get_x()>maxx)
+            maxx=a.get_v1().get_x();
+        if (a.get_v1().get_y()!=v.y && startindex==-1)
+        {
+            startindex=i;
+        }            
     }
-    Line2 exiter=Line2(cur,Vertex(INT_MIN,v.y));
-    for(size_t i=0;i<lines.size();++i)
+    if (startindex==-1)
+    { //all the edges fall on the y-coord of v
+        if (v.x>=minx && v.x<=maxx)
+            return true;
+        else
+            return false;
+    }
+    //printf("Startindex: %d\n",startindex);
+    Line2 exiter=Line2(v,Vertex(minx-1,v.y));
+    int crossings=0;
+    for(size_t ti=0;ti<lines.size();++ti)
     {
-        Line2& a=lines[i];
-        exiter.intersect(exiter);
+        
+        Line2 a=lines[(startindex+ti)%lines.size()];
+        std::vector<Line2> isect=exiter.intersect(a);
+        //printf("Intersect of %s and %s: %d\n",exiter.__repr__().c_str(),a.__repr__().c_str(),(int)isect.size());
+        if (isect.empty())
+            continue;
+        Line2 middle=isect[0];
+        assert(middle.get_v1().get_y()==v.y);
+        assert(middle.get_v2().get_y()==v.y);
+        int mid_min_x=std::min(middle.get_v1().get_x(),middle.get_v2().get_x());
+        int mid_max_x=std::max(middle.get_v1().get_x(),middle.get_v2().get_x());
+        //printf("Found intersect (%s): %d,%d\n",middle.__repr__().c_str(),mid_min_x,mid_max_x);
+        if (mid_min_x>v.x) continue;
+        if (mid_min_x<=v.x && mid_max_x>=v.x) 
+        {   
+            //printf("Vertex falls on edge\n");
+            return true; //v falls on edge of polygon, count as inside
+        }
+        assert(a.get_v1().y!=v.y);
+        bool enter_above=(a.get_v1().y>v.y);
+        //printf("Line starts above: %d\n",int(enter_above));
+        if (a.get_v2().y==v.y)
+        {
+            //printf("End of line falls on exiter, glancing or not?\n");
+            while(a.get_v2().y==v.y)
+            {
+                assert(ti!=lines.size()-1); //the end vertex (=startvertex) must always be off the v y-coord
+                ++ti;
+                a=lines[(startindex+ti)%lines.size()];
+            }
+            bool exit_above=(a.get_v2().y>v.y);
+            if (enter_above!=exit_above)
+                ++crossings; //an actual crossing, not just a glancing hit
+        }
+        else
+        {
+            bool exit_above=(a.get_v2().y>v.y);
+            //printf("Line crosses exiter, exits above: %d\n",int(exit_above));
+            assert(enter_above!=exit_above); //line actually crosses exiter-line
+            ++crossings;
+        }        
+    }
+    return bool(crossings&1);
+    
+}
+
+enum EventKind
+{
+    ENTER_EVENT,
+    EXIT_EVENT    
+};
+struct Event
+{
+    Vertex start;
+    Vertex p;
+    EventKind kind;
+    Event(Vertex start,Vertex p,EventKind kind):start(start),p(p),kind(kind){}
+    int val() const
+    {
+        return  (p-start).taxilength();            
+    }
+    bool operator<(const Event& e) const
+    {
+        return val()<e.val();
     }
     
+};
+
+std::vector<Line2> Polygon::intersect_line(Line2 b)
+{
+    if (lines.size()<3)
+        throw std::runtime_error("Polygon must have at least 3 lines!");
+    
+    int starti=-1;
+	for(size_t i=0;i<lines.size();++i)
+	{
+	     if (!b.is_on_line(lines[i].get_v1()))
+	     {
+	        starti=i;
+	        break;
+	     }
+   
+	}
+	if (starti==-1)
+	{ //Very special case - the entire polygon falls upon the line!
+	    return std::vector<Line2>();
+	}
+	int curi=starti;
+	for(;;)
+	{
+	    Line2 a=lines[curi%lines.size()];
+	    std::vector<Line2> res=a.intersect(b);
+	    if (res.size())
+	    {
+	        Line2 end_a=res[3];
+	        Line2 start_a=res[3];
+	        if (start_a.taxilen()>0)
+	        { 
+	            events.push_back(Event(b.get_v1(),start_a.get_v1(),EXIT_EVENT));
+	        }
+	        if (end_a.taxilen()>0)
+	        { //exit
+	            int side=b.side_of_extrapolated_line(end_a.get_v2());
+	            if (side<0)
+    	            events.push_back(Event(b.get_v1(),end_a.get_v1(),ENTER_EVENT));
+	            if (side>0)
+    	            events.push_back(Event(b.get_v1(),end_a.get_v1(),EXIT_EVENT));
+	        }
+	    }	
+	}
+	std::sort(events.begin(),events.end());
+	if (events.size()==0)
+	{
+	    std::vector<Line2> ret;
+	    if (is_inside(b.get_v1()))
+	        ret.push_back(b);
+	    return ret;
+	}
+	if (events[0].kind==EXIT_EVENT)
+	{
+	    Event vENTER_EVENT; asasdf
+	    v.start
+	    events.insert(events.begin(),v);
+	}
 }
 
 Polygon Polygon::remove_loops()
