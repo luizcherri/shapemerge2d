@@ -268,12 +268,34 @@ std::vector<Line2> Polygon::intersect_line(Line2 b)
 	        ret.push_back(b);
 	    return ret;
 	}
-	if (events[0].kind==EXIT_EVENT)
+	if (events.front().kind==ENTER_EVENT)
 	{
-	    Event vENTER_EVENT; asasdf
-	    v.start
-	    events.insert(events.begin(),v);
+	    Event enter(b.get_v1(),b.get_v1(),ENTER_EVENT);        
+	    events.insert(events.begin(),enter);
 	}
+	if (events.back().kind!=EXIT_EVENT)
+	{
+	    Event exit(b.get_v1(),b.get_v2(),EXIT_EVENT);
+	    events.insert(events.end(),exit);
+	}
+    assert(events.front().kind==ENTER_EVENT);
+    assert(events.back().kind==EXIT_EVENT);
+    std::vector<Line2> ret;
+    for(int i=0;i<events.size();++i)
+    {
+        if (events[i].kind!=ENTER_EVENT)
+        {            
+            continue;
+        }
+        Vector start=events[i].p;
+        ++i;
+        for(;i<event.size();++i)
+        {
+            if (events[i].kind==EXIT_EVENT)
+                ret.push_back(Line2(start,event.p,b.get_k(),b.get_m()));
+        }
+    }
+    return ret;
 }
 
 Polygon Polygon::remove_loops()
