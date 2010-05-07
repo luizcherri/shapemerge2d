@@ -1,4 +1,4 @@
-from pyshapemerge2d import Polygon,Vertex,vvector
+from pyshapemerge2d import Polygon,Vertex,vvector,Line2
 
 def test_poly_eq():
     polya=Polygon(vvector([
@@ -96,5 +96,46 @@ def test_inside_poly3():
     assert polya.is_inside(Vertex(5,5)) #on edge
     assert polya.is_inside(Vertex(3,5))
     assert not polya.is_inside(Vertex(5,7))
+    
+def test_polygon_intersect_line1():
+    polya=Polygon(vvector([
+        Vertex(0,0),Vertex(10,0),Vertex(10,10),Vertex(0,10)]))
+    ls=list(polya.intersect_line(Line2(Vertex(-5,5),Vertex(15,5))))
+    print ls
+    assert ls==[Line2(Vertex(0,5),Vertex(10,5))]
+def test_polygon_intersect_line2():
+    polya=Polygon(vvector([
+        Vertex(0,0),Vertex(10,0),Vertex(10,10),Vertex(0,10)]))
+    ls=list(polya.intersect_line(Line2(Vertex(-5,0),Vertex(15,0))))
+    print ls    
+    assert ls==[Line2(Vertex(0,0),Vertex(10,0))]
+def test_polygon_intersect_line3():
+    polya=Polygon(vvector([
+        Vertex(0,0),Vertex(5,0),Vertex(10,0),Vertex(10,10),Vertex(0,10)]))
+    ls=list(polya.intersect_line(Line2(Vertex(-5,0),Vertex(15,0))))
+    print ls
+    assert ls==[Line2(Vertex(0,0),Vertex(10,0))]
+def test_polygon_intersect_line4():
+    polya=Polygon(vvector([
+        Vertex(0,0),Vertex(5,0),Vertex(10,0),Vertex(5,0),Vertex(1,0),Vertex(0,1)]))
+    ls=list(polya.intersect_line(Line2(Vertex(-5,0),Vertex(15,0))))
+    print ls
+    assert ls==[Line2(Vertex(0,0),Vertex(10,0))]
+def test_polygon_intersect_line5():
+    polya=Polygon(vvector([
+        Vertex(0,-1),Vertex(10,0),Vertex(5,0),Vertex(0,0)]))
+    ls=list(polya.intersect_line(Line2(Vertex(-5,0),Vertex(15,0))))
+    print ls
+    assert ls==[Line2(Vertex(0,0),Vertex(10,0))]
+def test_polygon_intersect_line6():
+    polya=Polygon(vvector([
+        Vertex(0,1),Vertex(10,0),Vertex(5,0),Vertex(0,0)]))
+    ls=list(polya.intersect_line(Line2(Vertex(-5,0),Vertex(15,0))))
+    print ls
+    assert ls==[Line2(Vertex(-5,0),Vertex(15,0))]
+
+def test_polygon_intersect_line6():
+    raise "Continue here with harder polygons. But maybe don't solve the absolutely hardest, but rather start programming the flight plan?"
+    
     
     

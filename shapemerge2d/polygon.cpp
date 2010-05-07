@@ -198,8 +198,8 @@ bool Polygon::is_inside(Vertex v)
 
 enum EventKind
 {
-    ENTER_EVENT,
-    EXIT_EVENT    
+    EXIT_EVENT,
+    ENTER_EVENT
 };
 struct Event
 {
@@ -207,19 +207,81 @@ struct Event
     Vertex p;
     EventKind kind;
     Event(Vertex start,Vertex p,EventKind kind):start(start),p(p),kind(kind){}
+    std::string kindstr() const
+    {
+    	switch(kind)
+    	{
+		case EXIT_EVENT: return "EXIT_EVENT";
+		case ENTER_EVENT: return "ENTER_EVENT";
+    	}
+    	return "Undefined";
+    }
     int val() const
     {
         return  (p-start).taxilength();            
     }
     bool operator<(const Event& e) const
     {
-        return val()<e.val();
+    	if (val()<e.val())
+    		return true;
+    	if (val()>e.val())
+    		return false;
+        return kind<e.kind;
+    }
+    std::string repr() const
+    {
+    	std::ostringstream s;
+    	s<<"Event("<<p.__repr__()<<",kind="<<kindstr()<<")";
+    	return s.str();
     }
     
 };
 
+static void merge(const Vertex& start,std::vector<Line2>& ret,const Line2& line)
+{
+	if (ret.empty())
+	{
+		printf("      Adding initial line: %s\n",line.__repr__().c_str());
+		ret.push_back(line);
+		return;
+	}
+	int offret1=(ret.back().get_v1()-start).taxilength();
+	int offret2=(ret.back().get_v2()-start).taxilength();
+	int offline1=(line.get_v1()-start).taxilength();
+	int offline2=(line.get_v2()-start).taxilength();
+	printf("       offret: %d-%d, offline: %d-%d\n",
+			offret1,offret2,offline1,offline2);
+	if (offline1<offret1 || offline2<offret1)
+		throw std::runtime_error("Bad order of lines to merge");
+	if (offline1>offline2)
+		throw std::runtime_error("Bad vertex order in line to merge");
+	if (offline1<=offret2)
+	{
+		if (offline2>offret2)
+		{
+			//merge
+			ret.back()=Line2(ret.back().get_v1(),line.get_v2(),line.get_k(),line.get_m());
+			printf("      Merging line: %s, new back: %s\n",line.__repr__().c_str(),
+					ret.back().__repr__().c_str());
+		}
+		else
+		{
+			printf("      Eating line\n");
+			//just eat it
+		}
+	}
+	else
+	{
+		//no merge
+		ret.push_back(line);
+		printf("      Just adding line: %s, new back: %s\n",line.__repr__().c_str(),
+				ret.back().__repr__().c_str());
+	}
+}
+
 std::vector<Line2> Polygon::intersect_line(Line2 b)
 {
+	printf("Intersecting poly with line %s\n",b.__repr__().c_str());
     if (lines.size()<3)
         throw std::runtime_error("Polygon must have at least 3 lines!");
     
@@ -228,6 +290,7 @@ std::vector<Line2> Polygon::intersect_line(Line2 b)
 	{
 	     if (!b.is_on_line(lines[i].get_v1()))
 	     {
+	 		printf("Point #%zd doesn't fall directly on line!\n",i);
 	        starti=i;
 	        break;
 	     }
@@ -235,66 +298,144 @@ std::vector<Line2> Polygon::intersect_line(Line2 b)
 	}
 	if (starti==-1)
 	{ //Very special case - the entire polygon falls upon the line!
+		printf("Polygon falls on single line!\n");
 	    return std::vector<Line2>();
 	}
 	int curi=starti;
-	for(;;)
+	std::vector<Event> events;
+
+
+	for(size_t i=0;i<lines.size();++i,++curi)
 	{
-	    Line2 a=lines[curi%lines.size()];
-	    std::vector<Line2> res=a.intersect(b);
+		curi%=lines.size();
+	    Line2 a=lines[curi];
+	    printf("#%d line of polygon: %s\n",curi,a.__repr__().c_str());
+	    std::vector<Line2> res=b.intersect(a);
+	    //int last_excursion=-1;
+	    //int start_inside=-1; //1 = start inside, 0 = start outside
 	    if (res.size())
 	    {
-	        Line2 end_a=res[3];
-	        Line2 start_a=res[3];
-	        if (start_a.taxilen()>0)
+	    	Line2 middle=res[0];
+	        Line2 start_a=res[2];
+	        Line2 end_a=res[4];
+	    	/*if (middle.get_v2()!=end_b.get_v1())
+	    		middle=middle.reversed();*/
+
+	        printf("  Intersection! end_a: %s, middle: %s\n",
+	        		end_a.__repr__().c_str(),
+	        		middle.__repr__().c_str());
+
+	        if (middle.taxilen()>0)
 	        { 
-	            events.push_back(Event(b.get_v1(),start_a.get_v1(),EXIT_EVENT));
+	        	printf("    \x1b[33mLine enters the polygon edge!\x1b[0m\n");
+	            events.push_back(Event(b.get_v1(),middle.get_v1(),ENTER_EVENT));
+	            printf("      Pushed enter event: %s\n",events.back().repr().c_str());
+	            events.push_back(Event(b.get_v1(),middle.get_v2(),EXIT_EVENT));
+	            printf("      Pushed exit event: %s\n",events.back().repr().c_str());
 	        }
 	        if (end_a.taxilen()>0)
 	        { //exit
+	        	printf("    \x1b[32mPolygon edge exists line here\x1b[0m\n");
 	            int side=b.side_of_extrapolated_line(end_a.get_v2());
-	            if (side<0)
-    	            events.push_back(Event(b.get_v1(),end_a.get_v1(),ENTER_EVENT));
+	            printf("      Line exits on %s side of polygon edge\n",
+	            		((side<0) ? "left" : ((side>0) ? "right" : "unknown!")));
 	            if (side>0)
+	            {
+    	            events.push_back(Event(b.get_v1(),end_a.get_v1(),ENTER_EVENT));
+    	            printf("      Pushed event: %s\n",events.back().repr().c_str());
+
+	            }
+	            else
+	            if (side<0)
+	            {
     	            events.push_back(Event(b.get_v1(),end_a.get_v1(),EXIT_EVENT));
+					printf("      Pushed event: %s\n",events.back().repr().c_str());
+
+	            }
+	        }
+	        if (start_a.taxilen()>0)
+	        { //exit
+	        	printf("    \x1b[32mPolygon edge enters line here\x1b[0m\n");
+	            int side=b.side_of_extrapolated_line(start_a.get_v1());
+	            printf("      Line exits on %s side of polygon edge\n",
+	            		((side<0) ? "left" : ((side>0) ? "right" : "unknown!")));
+	            if (side<0)
+	            {
+    	            events.push_back(Event(b.get_v1(),start_a.get_v2(),ENTER_EVENT));
+    	            printf("      Pushed event: %s\n",events.back().repr().c_str());
+
+	            }
+	            else
+	            if (side>0)
+	            {
+    	            events.push_back(Event(b.get_v1(),start_a.get_v2(),EXIT_EVENT));
+					printf("      Pushed event: %s\n",events.back().repr().c_str());
+
+	            }
 	        }
 	    }	
+	    else
+	    {
+			printf("  No intersection.\n");
+	    }
 	}
+	printf("sorting events\n");
 	std::sort(events.begin(),events.end());
 	if (events.size()==0)
 	{
 	    std::vector<Line2> ret;
 	    if (is_inside(b.get_v1()))
+	    {
+	    	printf("The line is entirely inside the polygon\n");
 	        ret.push_back(b);
+	    }
+	    else
+	    {
+	    	printf("The line is entirely outside the polygon\n");
+	    }
 	    return ret;
 	}
-	if (events.front().kind==ENTER_EVENT)
+	printf("We have %zd events in total\n",events.size());
+	printf("The events are:\n");
+	for(int i=0;i<(int)events.size();++i)
 	{
-	    Event enter(b.get_v1(),b.get_v1(),ENTER_EVENT);        
-	    events.insert(events.begin(),enter);
+		printf("  #%d: %s\n",i,events[i].repr().c_str());
 	}
-	if (events.back().kind!=EXIT_EVENT)
-	{
-	    Event exit(b.get_v1(),b.get_v2(),EXIT_EVENT);
-	    events.insert(events.end(),exit);
-	}
-    assert(events.front().kind==ENTER_EVENT);
-    assert(events.back().kind==EXIT_EVENT);
     std::vector<Line2> ret;
-    for(int i=0;i<events.size();++i)
+    int level=0;
+    Rational k=b.get_k();
+    Rational m=b.get_m();
+    Vertex last_enter;
+    printf("Processing events:\n");
+    for(size_t i=0;i<events.size();++i)
     {
-        if (events[i].kind!=ENTER_EVENT)
-        {            
+		printf("  Event #%d\n",(int)i);
+    	if (events[i].kind==EXIT_EVENT)
+    	{
+    		printf("   Processing EXIT_EVENT %s\n",events[i].p.__repr__().c_str());
+    		if (ret.empty() && level==0)
+    		{
+        		printf("   Processing virtual start event\n");
+    			last_enter=b.get_v1();
+    			merge(b.get_v1(),ret,Line2(last_enter,events[i].p,k,m));
+    			level=1;
+    		}
+    		merge(b.get_v1(),ret,Line2(last_enter,events[i].p,k,m));
+    		--level;
+    		assert(level>=0);
+    	}
+        if (events[i].kind==ENTER_EVENT)
+        {
+        	printf("   Processing ENTER_EVENT %s\n",events[i].p.__repr__().c_str());
+        	if (level==0)
+        		last_enter=events[i].p;
+        	++level;
             continue;
         }
-        Vector start=events[i].p;
-        ++i;
-        for(;i<event.size();++i)
-        {
-            if (events[i].kind==EXIT_EVENT)
-                ret.push_back(Line2(start,event.p,b.get_k(),b.get_m()));
-        }
     }
+    if (level>0)
+		merge(b.get_v1(),ret,Line2(last_enter,b.get_v2(),k,m));
+
     return ret;
 }
 
