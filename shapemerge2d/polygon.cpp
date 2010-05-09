@@ -198,8 +198,13 @@ bool Polygon::is_inside(Vertex v)
 
 enum EventKind
 {
-    EXIT_EVENT,
-    ENTER_EVENT
+    EDGE_ENTER_EVENT,
+    EARLY_EXIT_EVENT,
+    EARLY_ENTER_EVENT,
+
+    LATE_ENTER_EVENT,
+    LATE_EXIT_EVENT,
+	EDGE_EXIT_EVENT
 };
 struct Event
 {
@@ -211,11 +216,21 @@ struct Event
     {
     	switch(kind)
     	{
-		case EXIT_EVENT: return "EXIT_EVENT";
-		case ENTER_EVENT: return "ENTER_EVENT";
+		case EARLY_EXIT_EVENT: return "EARLY_EXIT_EVENT";
+		case EARLY_ENTER_EVENT: return "EARLY_ENTER_EVENT";
+		case LATE_EXIT_EVENT: return "LATE_EXIT_EVENT";
+		case LATE_ENTER_EVENT: return "LATE_ENTER_EVENT";
+		case EDGE_EXIT_EVENT: return "EDGE_EXIT_EVENT";
+		case EDGE_ENTER_EVENT: return "EDGE_ENTER_EVENT";
     	}
     	return "Undefined";
     }
+    bool is_enter(){return kind==EARLY_ENTER_EVENT ||
+						   kind==LATE_ENTER_EVENT ||
+						   kind==EDGE_ENTER_EVENT;}
+    bool is_exit(){return kind==EARLY_EXIT_EVENT ||
+						  kind==LATE_EXIT_EVENT ||
+						  kind==EDGE_EXIT_EVENT;}
     int val() const
     {
         return  (p-start).taxilength();            
@@ -279,6 +294,7 @@ static void merge(const Vertex& start,std::vector<Line2>& ret,const Line2& line)
 	}
 }
 
+
 std::vector<Line2> Polygon::intersect_line(Line2 b)
 {
 	printf("Intersecting poly with line %s\n",b.__repr__().c_str());
@@ -325,30 +341,30 @@ std::vector<Line2> Polygon::intersect_line(Line2 b)
 	        		end_a.__repr__().c_str(),
 	        		middle.__repr__().c_str());
 
-	        if (middle.taxilen()>0)
+	        if (1/*middle.taxilen()>0*/)
 	        { 
 	        	printf("    \x1b[33mLine enters the polygon edge!\x1b[0m\n");
-	            events.push_back(Event(b.get_v1(),middle.get_v1(),ENTER_EVENT));
+	            events.push_back(Event(b.get_v1(),middle.get_v1(),EDGE_ENTER_EVENT));
 	            printf("      Pushed enter event: %s\n",events.back().repr().c_str());
-	            events.push_back(Event(b.get_v1(),middle.get_v2(),EXIT_EVENT));
+	            events.push_back(Event(b.get_v1(),middle.get_v2(),EDGE_EXIT_EVENT));
 	            printf("      Pushed exit event: %s\n",events.back().repr().c_str());
 	        }
 	        if (end_a.taxilen()>0)
 	        { //exit
-	        	printf("    \x1b[32mPolygon edge exists line here\x1b[0m\n");
+	        	printf("    \x1b[32mPolygon edge exits line here\x1b[0m\n");
 	            int side=b.side_of_extrapolated_line(end_a.get_v2());
 	            printf("      Line exits on %s side of polygon edge\n",
 	            		((side<0) ? "left" : ((side>0) ? "right" : "unknown!")));
 	            if (side>0)
 	            {
-    	            events.push_back(Event(b.get_v1(),end_a.get_v1(),ENTER_EVENT));
+    	            events.push_back(Event(b.get_v1(),end_a.get_v1(),LATE_ENTER_EVENT));
     	            printf("      Pushed event: %s\n",events.back().repr().c_str());
 
 	            }
 	            else
 	            if (side<0)
 	            {
-    	            events.push_back(Event(b.get_v1(),end_a.get_v1(),EXIT_EVENT));
+    	            events.push_back(Event(b.get_v1(),end_a.get_v1(),LATE_EXIT_EVENT));
 					printf("      Pushed event: %s\n",events.back().repr().c_str());
 
 	            }
@@ -357,18 +373,18 @@ std::vector<Line2> Polygon::intersect_line(Line2 b)
 	        { //exit
 	        	printf("    \x1b[32mPolygon edge enters line here\x1b[0m\n");
 	            int side=b.side_of_extrapolated_line(start_a.get_v1());
-	            printf("      Line exits on %s side of polygon edge\n",
+	            printf("      Line enters on %s side of polygon edge\n",
 	            		((side<0) ? "left" : ((side>0) ? "right" : "unknown!")));
 	            if (side<0)
 	            {
-    	            events.push_back(Event(b.get_v1(),start_a.get_v2(),ENTER_EVENT));
+    	            events.push_back(Event(b.get_v1(),start_a.get_v2(),EARLY_ENTER_EVENT));
     	            printf("      Pushed event: %s\n",events.back().repr().c_str());
 
 	            }
 	            else
 	            if (side>0)
 	            {
-    	            events.push_back(Event(b.get_v1(),start_a.get_v2(),EXIT_EVENT));
+    	            events.push_back(Event(b.get_v1(),start_a.get_v2(),EARLY_EXIT_EVENT));
 					printf("      Pushed event: %s\n",events.back().repr().c_str());
 
 	            }
@@ -397,12 +413,31 @@ std::vector<Line2> Polygon::intersect_line(Line2 b)
 	}
 	printf("We have %zd events in total\n",events.size());
 	printf("The events are:\n");
+	int lowest_level=0;
+	int level=0;
+	for(int i=0;i<(int)events.size();++i)
+	{
+		if (events[i].is_enter())
+			++level;
+		if (events[i].is_exit())
+			--level;
+		if (level<lowest_level)
+			lowest_level=level;
+		printf("  #%d: %s\n",i,events[i].repr().c_str());
+	}
+	printf("Lowest level: %d\n",lowest_level);
+	for(int i=0;i<-lowest_level;++i)
+	{ //insert 'virtual' enter events
+		events.insert(events.begin(),Event(b.get_v1(),b.get_v1(),EARLY_ENTER_EVENT));
+	}
+	printf("After inserting virtual events:\n");
 	for(int i=0;i<(int)events.size();++i)
 	{
 		printf("  #%d: %s\n",i,events[i].repr().c_str());
 	}
+
     std::vector<Line2> ret;
-    int level=0;
+    level=0;
     Rational k=b.get_k();
     Rational m=b.get_m();
     Vertex last_enter;
@@ -410,21 +445,14 @@ std::vector<Line2> Polygon::intersect_line(Line2 b)
     for(size_t i=0;i<events.size();++i)
     {
 		printf("  Event #%d\n",(int)i);
-    	if (events[i].kind==EXIT_EVENT)
+    	if (events[i].is_exit())
     	{
     		printf("   Processing EXIT_EVENT %s\n",events[i].p.__repr__().c_str());
-    		if (ret.empty() && level==0)
-    		{
-        		printf("   Processing virtual start event\n");
-    			last_enter=b.get_v1();
-    			merge(b.get_v1(),ret,Line2(last_enter,events[i].p,k,m));
-    			level=1;
-    		}
     		merge(b.get_v1(),ret,Line2(last_enter,events[i].p,k,m));
     		--level;
     		assert(level>=0);
     	}
-        if (events[i].kind==ENTER_EVENT)
+        if (events[i].is_enter())
         {
         	printf("   Processing ENTER_EVENT %s\n",events[i].p.__repr__().c_str());
         	if (level==0)
@@ -471,6 +499,8 @@ Polygon Polygon::remove_loops()
 	ret.shape=shape;
 	return ret;
 }
+
+
 bool Polygon::operator==(const Polygon& o)const
 {
 	if (lines.size()!=o.lines.size()) return false;

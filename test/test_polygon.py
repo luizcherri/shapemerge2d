@@ -127,15 +127,146 @@ def test_polygon_intersect_line5():
     ls=list(polya.intersect_line(Line2(Vertex(-5,0),Vertex(15,0))))
     print ls
     assert ls==[Line2(Vertex(0,0),Vertex(10,0))]
-def test_polygon_intersect_line6():
-    polya=Polygon(vvector([
-        Vertex(0,1),Vertex(10,0),Vertex(5,0),Vertex(0,0)]))
-    ls=list(polya.intersect_line(Line2(Vertex(-5,0),Vertex(15,0))))
-    print ls
-    assert ls==[Line2(Vertex(-5,0),Vertex(15,0))]
 
 def test_polygon_intersect_line6():
-    raise "Continue here with harder polygons. But maybe don't solve the absolutely hardest, but rather start programming the flight plan?"
+    polya=Polygon(vvector([
+        Vertex(0,0),Vertex(10,0),Vertex(10,10),Vertex(0,10)]))
+    ls=list(polya.intersect_line(Line2(Vertex(15,5),Vertex(-5,5))))
+    print ls
+    assert ls==[Line2(Vertex(10,5),Vertex(0,5))]
+
+def test_polygon_intersect_line7():
+    polya=Polygon(vvector([
+        Vertex(0,0),Vertex(10,0),Vertex(10,10),Vertex(5,5),Vertex(0,10)]))
+    ls=list(polya.intersect_line(Line2(Vertex(-5,7),Vertex(15,7))))
+    print ls
+    assert ls==[Line2(Vertex(0,7),Vertex(4,7)),
+                Line2(Vertex(6,7),Vertex(10,7))]
+                
+def test_polygon_intersect_line8():
+    polya=Polygon(vvector([
+        Vertex(0,0),Vertex(10,0),Vertex(10,10),Vertex(0,10)]))
+    ls=list(polya.intersect_line(Line2(Vertex(5,5),Vertex(15,5))))
+    print ls
+    assert ls==[Line2(Vertex(5,5),Vertex(10,5))]
+                
+def test_polygon_intersect_line9():
+    polya=Polygon(vvector([
+        Vertex(0,0),Vertex(10,0),Vertex(10,10),Vertex(0,10)]))
+    ls=list(polya.intersect_line(Line2(Vertex(-5,5),Vertex(5,5))))
+    print ls
+    assert ls==[Line2(Vertex(0,5),Vertex(5,5))]
+
+def test_polygon_intersect_line10():
+    polya=Polygon(vvector([
+        Vertex(0,0),Vertex(10,0),Vertex(10,10),Vertex(0,10)]))
+    ls=list(polya.intersect_line(Line2(Vertex(2,5),Vertex(8,5))))
+    print ls
+    assert ls==[Line2(Vertex(2,5),Vertex(8,5))]
+                
+def test_polygon_intersect_line11():
+    polya=Polygon(vvector([
+        Vertex(0,0),Vertex(10,0),Vertex(10,10),Vertex(0,10)]))
+    ls=list(polya.intersect_line(Line2(Vertex(2,15),Vertex(8,15))))
+    print ls
+    assert ls==[]
+
+def test_polygon_intersect_line12():
+    polya=Polygon(vvector([
+        Vertex(0,0),Vertex(10,0),Vertex(10,10),Vertex(0,10)]))
+    ls=list(polya.intersect_line(Line2(Vertex(0,5),Vertex(10,5))))
+    print ls
+    assert ls==[Line2(Vertex(0,5),Vertex(10,5))]
+
+def test_polygon_intersect_line13():
+    polya=Polygon(vvector([
+        Vertex(0,0),Vertex(10,0),Vertex(10,10),Vertex(0,10)]))
+    ls=list(polya.intersect_line(Line2(Vertex(5,15),Vertex(-5,5))))
+    print ls
+    assert ls==[Line2(Vertex(0,10),Vertex(0,10))]
+
+def test_polygon_intersect_line14():
+    polya=Polygon(vvector([
+        Vertex(0,0),Vertex(10,0),Vertex(10,10),Vertex(0,10)]))
+    ls=list(polya.intersect_line(Line2(Vertex(10,15),Vertex(10,-5))))
+    print ls
+    assert ls==[Line2(Vertex(10,10),Vertex(10,0))]
+
+def test_polygon_intersect_line15():
+    polya=Polygon(vvector([
+        Vertex(0,0),Vertex(10,0),Vertex(10,10),Vertex(0,10)]))
+    ls=list(polya.intersect_line(Line2(Vertex(10,-15),Vertex(10,25))))
+    print ls
+    assert ls==[Line2(Vertex(10,0),Vertex(10,10))]
+
+def test_polygon_intersect_line16():
+    polya=Polygon(vvector([
+        Vertex(0,0),Vertex(10,0),Vertex(10,10),Vertex(0,10)]))
+    ls=list(polya.intersect_line(Line2(Vertex(10,-15),Vertex(10,5))))
+    print ls
+    assert ls==[Line2(Vertex(10,0),Vertex(10,5))]
+def test_polygon_intersect_line17():
+    polya=Polygon(vvector([
+        Vertex(0,0),Vertex(10,0),Vertex(10,10),Vertex(0,10)]))
+    ls=list(polya.intersect_line(Line2(Vertex(10,7),Vertex(10,5))))
+    print ls
+    assert ls==[Line2(Vertex(10,7),Vertex(10,5))]
+def test_polygon_intersect_line18():
+    polya=Polygon(vvector([
+        Vertex(0,0),Vertex(10,0),Vertex(10,10),Vertex(0,10)]))
+    ls=list(polya.intersect_line(Line2(Vertex(10,10),Vertex(15,15))))
+    print ls
+    assert ls==[Line2(Vertex(10,10),Vertex(10,10))]
+
+def test_polygon_intersect_line19():
+    polya=Polygon(vvector([
+        Vertex(0,0),Vertex(10,0),Vertex(10,10),Vertex(0,10)]))
+    ls=list(polya.intersect_line(Line2(Vertex(5,5),Vertex(15,15))))
+    print ls
+    assert ls==[Line2(Vertex(5,5),Vertex(10,10))]
+
+def test_polygon_intersect_line20():
+    polya=Polygon(vvector([
+        Vertex(0,0),Vertex(10,0),Vertex(10,5),Vertex(5,5),Vertex(5,10),Vertex(0,10)]))
+    ls=list(polya.intersect_line(Line2(Vertex(-5,5),Vertex(15,5))))
+    print ls
+    assert ls==[Line2(Vertex(0,5),Vertex(10,5))]
+    
+def test_polygon_intersect_line21():
+    polya=Polygon(vvector([
+        Vertex(0,0),Vertex(10,0),Vertex(10,5),Vertex(5,5),Vertex(5,10),Vertex(0,10)]))
+    ls=list(polya.intersect_line(Line2(Vertex(0,5),Vertex(10,4))))
+    print ls
+    assert ls==[Line2(Vertex(0,5),Vertex(10,4))]
+def test_polygon_intersect_line22():
+    polya=Polygon(vvector([
+        Vertex(0,0),Vertex(10,0),Vertex(10,5),Vertex(5,5),Vertex(5,10),Vertex(0,10)]))
+    ls=list(polya.intersect_line(Line2(Vertex(0,5),Vertex(10,6))))
+    print ls
+    assert ls==[Line2(Vertex(0,5),Vertex(5,6))]
+
+def test_polygon_intersect_line22():
+    polya=Polygon(vvector([
+        Vertex(0,0),Vertex(10,0),Vertex(10,5),Vertex(5,5),Vertex(5,10),Vertex(0,10)]))
+    ls=list(polya.intersect_line(Line2(Vertex(2,7),Vertex(2,7))))
+    print ls
+    assert ls==[Line2(Vertex(2,7),Vertex(2,7))]
+    
+def test_polygon_intersect_line23():
+    polya=Polygon(vvector([
+        Vertex(0,0),Vertex(10000,0),Vertex(10000,10000),Vertex(0,10000)]))
+    ls=list(polya.intersect_line(Line2(Vertex(-5000,5000),Vertex(15000,5000))))
+    print ls
+    assert ls==[Line2(Vertex(0,5000),Vertex(10000,5000))]
+def test_polygon_intersect_line23():
+    polya=Polygon(vvector([
+        Vertex(0,0),Vertex(10000000,0),Vertex(10000000,10000000),Vertex(0,10000000)]))
+    ls=list(polya.intersect_line(Line2(Vertex(-5000000,5000000),Vertex(15000000,5000000))))
+    print ls
+    assert ls==[Line2(Vertex(0,5000000),Vertex(10000000,5000000))]
+
     
     
     
+    
+
