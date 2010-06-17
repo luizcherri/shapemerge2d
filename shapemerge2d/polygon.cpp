@@ -84,6 +84,25 @@ void Polygon::merge_straight_sections()
 	}
 }
 
+float Polygon::calc_area()
+{
+    double sum=0;
+	BOOST_FOREACH(const Line2& l,lines)
+	{
+	    bool up=false;
+	    if (l.get_y1_inexact()<l.get_y2_inexact())
+	    {
+	        up=true;
+	    }
+	    double contrib=
+	        (l.get_y2_inexact()-l.get_y1_inexact())*
+	        0.5*(l.get_x2_inexact()+l.get_x1_inexact());
+        sum+=contrib;	    
+	}
+	return sum;
+}
+
+
 Vertex Polygon::lower_left_vertex() const
 {
 	if (lines.size()==0) throw std::runtime_error("Polygon has no edges!");

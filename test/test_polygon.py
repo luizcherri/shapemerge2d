@@ -265,6 +265,16 @@ def test_polygon_intersect_line23():
     print ls
     assert ls==[Line2(Vertex(0,5000000),Vertex(10000000,5000000))]
 
+def test_calc_area():
+    polya=Polygon(vvector([
+        Vertex(0,0),Vertex(1,0),Vertex(1,1),Vertex(0,1)]))
+    assert abs(polya.calc_area()-1)<1e-5
+    polyb=Polygon(vvector([
+        Vertex(0,0),Vertex(1,0),Vertex(2,1),Vertex(0,1)]))
+    assert abs(polyb.calc_area()-1.5)<1e-5
+    polyc=Polygon(vvector([
+        Vertex(0,0),Vertex(2,0),Vertex(2,2),Vertex(1,0),Vertex(0,2)]))
+    assert abs(polyc.calc_area()-2)<1e-5
     
     
     

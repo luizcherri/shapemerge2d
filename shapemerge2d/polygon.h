@@ -101,6 +101,13 @@ namespace shapemerge2d
          * Only works on loop-free (non-self-overlapping), ccw polygons.
          */		
 		std::vector<Line2> intersect_line(Line2 line);
+		
+		/**
+		 * Calculate area of polygon with a simple method.
+		 * Only works for sane polygons.
+		 */
+		float calc_area();
+		
 
         bool is_inside(Vertex v);		
 
