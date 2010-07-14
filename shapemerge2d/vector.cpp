@@ -1,5 +1,6 @@
 #include "shapemerge2d/vector.h"
 #include <algorithm>
+#include <math.h>
 
 namespace shapemerge2d
 {
@@ -29,6 +30,10 @@ namespace shapemerge2d
 	Vector Vector::operator+(const Vector& o) const
 	{
 		return Vector(x+o.x,y+o.y);
+	}
+	double Vector::approxlength() const
+	{
+	    return sqrt(x*(double)x+y*(double)y);
 	}
 
 }

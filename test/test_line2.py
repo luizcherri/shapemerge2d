@@ -270,4 +270,18 @@ def test_side_of4():
     assert r.side_of_extrapolated_line(Vertex(-5,5))==1
     assert r.side_of_extrapolated_line(Vertex(0,5))==0
 
+def test_line_closest():
+    l=Line2(Vertex(0,0),Vertex(10,0))    
+    assert l.approx_closest(Vertex(5,0))==Vertex(5,0)
+    assert l.approx_closest(Vertex(-5,0))==Vertex(0,0)
+    assert l.approx_closest(Vertex(15,0))==Vertex(10,0)
+    assert l.approx_closest(Vertex(5,5))==Vertex(5,0)
+    assert abs(l.approx_dist(Vertex(5,5))-5)<1e-5
+    
+    l=Line2(Vertex(1127808,639680),Vertex(1120704,642752))
+    p=Vertex(1141685,587443)
+    dist=l.approx_dist(p)
+    print "Dist: ",dist
+    assert abs(dist)<1141685
+    
 

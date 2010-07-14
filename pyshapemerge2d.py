@@ -146,9 +146,11 @@ class Vector(_object):
     def __sub__(self, *args): return _pyshapemerge2d.Vector___sub__(self, *args)
     def __add__(self, *args): return _pyshapemerge2d.Vector___add__(self, *args)
     def __eq__(self, *args): return _pyshapemerge2d.Vector___eq__(self, *args)
+    def scalarprod(self, *args): return _pyshapemerge2d.Vector_scalarprod(self, *args)
     def __repr__(self): return _pyshapemerge2d.Vector___repr__(self)
     def taxilength(self): return _pyshapemerge2d.Vector_taxilength(self)
     def maxnorm(self): return _pyshapemerge2d.Vector_maxnorm(self)
+    def approxlength(self): return _pyshapemerge2d.Vector_approxlength(self)
 Vector_swigregister = _pyshapemerge2d.Vector_swigregister
 Vector_swigregister(Vector)
 
@@ -183,6 +185,8 @@ class Line2(_object):
     def get_tags(self): return _pyshapemerge2d.Line2_get_tags(self)
     def __repr__(self): return _pyshapemerge2d.Line2___repr__(self)
     def reversed(self): return _pyshapemerge2d.Line2_reversed(self)
+    def approx_dist(self, *args): return _pyshapemerge2d.Line2_approx_dist(self, *args)
+    def approx_closest(self, *args): return _pyshapemerge2d.Line2_approx_closest(self, *args)
     def is_vertical(self): return _pyshapemerge2d.Line2_is_vertical(self)
     def get_k(self): return _pyshapemerge2d.Line2_get_k(self)
     def get_m(self): return _pyshapemerge2d.Line2_get_m(self)

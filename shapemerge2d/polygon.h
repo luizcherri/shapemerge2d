@@ -113,7 +113,10 @@ namespace shapemerge2d
 
 		/**
 		 * Nominal polygons have their vertices in a
-		 * counter clockwise order.
+		 * counter clockwise order.		 
+		 * This routine requires that the polygon
+		 * contain no repeated vertices. Two adjacent
+		 * vertices must not be identical.
 		 */
 		bool is_ccw()const;
 
