@@ -399,6 +399,78 @@ void BooleanOp::step9_calc_result()
 	result=new Shape("mergeresult",res_polys);
 
 }
+
+class AreaSorter
+{
+    public:
+    bool operator()(const Polygon& a,const Polygon& b)const
+    {
+        return a.naive_area()<b.naive_area();
+    }
+};
+void BooleanOp::step10_eliminate_enclosed_cells()
+{
+    //smallest polygon first
+	std::sort(result->get_polys().begin(),result->get_polys().end(),AreaSorter());
+	std::set<Polygon*> holes_inside_someone;
+    for(size_t idx=0;idx<result->get_polys().size();)
+    {	    
+        Polygon& poly=result->get_polys()[idx];
+        if (poly.get_lines().size()<=2) 
+            throw std::runtime_error("Polygon with less than three corners found");
+        int subsumed=-1;
+        Vertex some_point=poly.get_lines()[0].get_v1();
+        printf("Considering current Polygon #%ld, area %ld, kind: %s\n",idx,poly.naive_area(),poly.get_kind_str().c_str());
+        for(size_t j=idx+1;j<result->get_polys().size();++j)
+        {	    
+            Polygon& outer=result->get_polys()[j];
+            if (outer.naive_area()<=poly.naive_area())
+            	continue; //neither is actually inside the other. Only happens for VOIDs that envelop polygons.
+            printf("Comparing against #%ld, area %ld, kind: %s\n",j,outer.naive_area(),outer.get_kind_str().c_str());
+            if (outer.is_inside(some_point))
+            {
+                printf("current polygon is inside\n");
+                if (outer.get_kind()==poly.get_kind())
+                {
+                    printf("and of same kind\n");
+                    subsumed=idx;
+                    break;           
+                }
+                else
+                {
+                    printf("but not of same kind\n");
+                    if (poly.get_kind()==Polygon::HOLE)
+                    {
+                    	//this polygon is a hole that is inside another polygon.
+                    	holes_inside_someone.insert(&poly);
+                    }
+                    break; //the closest enclosing polygon had a different kind, so we can't subsume the current poly. go to next.
+                }
+            }
+        }
+        if (subsumed!=-1)
+        {
+            printf("Removing polygon #%d\n",subsumed);
+            result->remove_polygon_by_idx(subsumed);
+            break;
+        }
+        else
+        {
+            ++idx;
+        }
+    }
+    for(int i=result->get_polys().size()-1;i>=0;--i)
+    {
+        Polygon& poly=result->get_polys()[i];
+    	if (poly.get_kind()==Polygon::HOLE &&
+    		holes_inside_someone.find(&poly)==holes_inside_someone.end())
+    	{
+    		printf("Removing hole polygon: #%d, %s, since it is inside nothing.\n",i,poly.get_kind_str().c_str());
+            result->remove_polygon_by_idx(i);
+    	}
+    }
+}
+
 Vertex Cell::get_leftmost()
 {
 	Vertex leftmost;
@@ -422,7 +494,7 @@ Vertex Cell::get_leftmost()
 	return leftmost;
 }
 
-Shape* BooleanOp::step9_get_result()
+Shape* BooleanOp::step11_get_result()
 {
 	return result;
 }
@@ -520,6 +592,8 @@ void BooleanOp::recurse_determine_cover(Cell* curcell,std::set<const Polygon*> c
 }
 void BooleanOp::step1_add_lines(Shape* shape_a,Shape* shape_b)
 {
+	if (shape_a==NULL || shape_b==NULL)
+		throw std::runtime_error("One of the shapes is NULL");
 	BOOST_FOREACH(const Polygon& poly_a,shape_a->get_polys())
 	{
 		tagmap.push_back(&poly_a);
@@ -684,9 +758,15 @@ void BooleanOp::step7_classify_cells(BooleanOpStrategy* strat)
 	BOOST_FOREACH(Cell* cell,cells)
 	{
 		if (cell->cover.size()==0)
-			cell->classification=VOID;
+		{
+			printf("Void class:%s\n",cell->__repr__().c_str());
+			cell->classification=HOLE;
+		}
 		else
+		{
+			printf("Strategy (Union) class\n");
 			cell->classification=strat->evaluate(*cell);
+		}
 	}
 }
 BooleanUpResult BooleanOrStrategy::evaluate(const Cell& cell)
@@ -711,10 +791,16 @@ std::string Cell::get_classification()
 std::string Cell::__repr__() const
 {
 	std::ostringstream str;
-	str<<"Cell("<<edges.size()<<" edges ";
+	str<<"Cell("<<bur_tostr(classification)<<", "<<edges.size()<<" edges, covered by: [";
 	BOOST_FOREACH(const Polygon* cov,cover)
 	{
 		str<<" "<<cov->get_shape()->get_name();
+	}
+	str<<"] edges are:";
+	BOOST_FOREACH(Edge* edge,edges)
+	{
+		str<<" "<<edge->v1.__repr__();
+		str<<"-"<<edge->v2.__repr__();
 	}
 	str<<")";
 	return str.str();
@@ -734,6 +820,21 @@ void BooleanOp::step5_create_cells()
 		mark_side(1,&(it->second));
 	}
 }
+
+const char* bur_tostr(BooleanUpResult r)
+{
+	switch(r)
+	{
+		case HOLE: return "HOLE";
+		case SOLID: return "SOLID";
+		case VOID: return "VOID";
+		case UNCLASSIFIED: return "UNCLASSIFIED";
+		default:
+			return "UNKNOWN";
+	}
+}
+
+
 void BooleanOp::step8_merge_cells()
 {
 	num_merged_polys=0;
@@ -758,11 +859,12 @@ void BooleanOp::step8_merge_cells()
 				BOOST_FOREACH(auto neighitem,mergecell->neighbors)
 				{
 					Cell* neighcell=neighitem.first;
-					//printf("Considering %s\n",
-					//	neighcell->__repr__().c_str());
+					//printf("Considering %s\n",neighcell->__repr__().c_str());
 					if (neighcell->merged_poly==-1 && neighcell->classification==cell->classification)
 					{
-						//printf("Added it\n");
+						printf("Merging:\n  ->%s\n  ->%s\n",
+								cell->__repr__().c_str(),
+								neighcell->__repr__().c_str());
 						next_merge_front.insert(neighcell);
 					}
 					else

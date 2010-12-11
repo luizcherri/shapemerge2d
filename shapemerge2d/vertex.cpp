@@ -1,7 +1,6 @@
 #include "shapemerge2d/vertex.h"
 #include "shapemerge2d/vector.h"
 #include <algorithm>
-#include <math.h>
 
 namespace shapemerge2d
 {
@@ -27,4 +26,3 @@ namespace shapemerge2d
 	Vertex origin;
 
 }
-

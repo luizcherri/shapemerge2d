@@ -31,7 +31,8 @@ namespace shapemerge2d
 		Shape(const Shape&);//noncopyable (Polygons have pointers to their shapes)
 	public:
 		Shape* get_this(){return this;}
-		const std::vector<Polygon>& get_polys();
+		const std::vector<Polygon>& get_polys()const;
+		std::vector<Polygon>& get_polys();
 		Shape();
 		bool operator==(const Shape& o) const;
 		Shape(const std::string& name,const Polygon poly);
@@ -44,7 +45,7 @@ namespace shapemerge2d
 		const std::string& get_name()const{return name;}
 		std::string __repr__()const;
 		std::string dump() const;
-		void remove_polygon_by_idx(int idx);
+        void remove_polygon_by_idx(int idx);
 	private:
 		std::vector<Polygon> polys;
 	};

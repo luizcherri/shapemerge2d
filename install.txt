@@ -1,0 +1,6 @@
+Dependencies:
+
+build-essential
+boost
+scons
+

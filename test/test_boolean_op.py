@@ -362,7 +362,7 @@ def dump_cells(bo):
        
 def merge_shapes(shape_a,shape_b,vis=False):
     bo=BooleanOp()
-    #print "Shape_a,shape_b: ",shape_a,shape_b
+    print "Shape_a,shape_b: ",shape_a,shape_b
     bo.step1_add_lines(shape_a,shape_b)
     bo.step2_intersect_lines()
     
@@ -410,7 +410,7 @@ def position_line(s,match):
                 if ypos>max[1]: max[1]=ypos
     return Line2(Vertex(min[0],min[1]),Vertex(max[0],max[1]))
 
-def pyshape(name,data):
+def pyshape(name,data,kind="solid"):
     assert data.count("\t")==0
     xpos=1
     ypos=data.count("\n")
@@ -453,8 +453,15 @@ def pyshape(name,data):
             raise Exception("Unexpected error - bad input-data?")
         #print "Line: %s:%s"%(n1,outline)
         outv.append(outline.get_v1())
-    return Shape(name,vvector(outv))
-    
+    poly=Polygon(vvector(outv))
+    if not poly.is_ccw():
+        raise Exception("shouldn't be cw")
+    if kind=="hole":
+        poly.set_kind(Polygon.HOLE)
+    shape=Shape(name,poly)
+    assert shape!=None
+    return shape
+
 def asciart_put(art,x,y,ch):
     if x<0 or y<0 or x>100 or y>100: raise Exception("Too big shape for asciart")
     while len(art)<=y:
@@ -783,12 +790,104 @@ AAAAAAAAAAAAAB
     real_output=merge_shapes(input1,input2,False)    
     print asciart(real_output)
     assert should_output==real_output
-
-
-
-
         
         
+
+def test_verify_shape9():
+    input1=pyshape("leftbox",\
+"""
+
+ DCCCC
+ D   B
+ AAAAB
+""")
+    input2=pyshape("rightbox",\
+"""
+DCCCCCC
+D     B
+D     B
+D     B
+AAAAAAB
+""")        
+    should_output=pyshape("resultbox",\
+"""
+DCCCCCC
+D     B
+D     B
+D     B
+AAAAAAB
+""")
+    real_output=merge_shapes(input1,input2,False)    
+    print asciart(real_output)
+    assert should_output==real_output
+    
+    
+def test_verify_shape10():
+    input1=pyshape("leftbox",\
+"""
+
+  DCCCC
+  D   B
+  AAAAB
+
+""","hole")
+    input2=pyshape("rightbox",\
+"""
+DCCCCCCCC
+D       B
+D       B
+D       B
+D       B
+D       B
+AAAAAAAAB
+""")        
+    should_art=\
+"""
+DCCCCCC
+D     B
+D     B
+D     B
+AAAAAAB
+"""
+    print "Merging shapes: ",input1,input2
+    real_output=merge_shapes(input1,input2,False)    
+    asci=asciart(real_output)
+    print "============================"
+    print asci
+    print "============================"
+    assert 0
+    
+
+def test_verify_shape11():
+    input1=pyshape("leftbox",\
+"""
+HGGGGGGGG
+H       F
+H EEEEEEF
+H D
+H DCCCCCC
+H       B
+AAAAAAAAB
+""","hole")
+    
+    input2=pyshape("rightbox",\
+"""
+
+
+   DCCC
+   D  B
+   AAAB
+
+
+""")        
+    print "Merging shapes: ",input1,input2
+    real_output=merge_shapes(input1,input2,False)    
+    asci=asciart(real_output)
+    print "============================"
+    print asci
+    print "============================"
+    assert 0
+
     
 def vistest_merge_shapes():    
     for x in xrange(10):

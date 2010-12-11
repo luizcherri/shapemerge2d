@@ -43,8 +43,6 @@ public:
 		return os.str();
 	}
 	Line2 reversed() const;
-    double approx_dist(Vertex p);
-    Vertex approx_closest(Vertex p);
 
 	bool is_vertical() const;
 	Rational get_k() const;

@@ -146,11 +146,9 @@ class Vector(_object):
     def __sub__(self, *args): return _pyshapemerge2d.Vector___sub__(self, *args)
     def __add__(self, *args): return _pyshapemerge2d.Vector___add__(self, *args)
     def __eq__(self, *args): return _pyshapemerge2d.Vector___eq__(self, *args)
-    def scalarprod(self, *args): return _pyshapemerge2d.Vector_scalarprod(self, *args)
     def __repr__(self): return _pyshapemerge2d.Vector___repr__(self)
     def taxilength(self): return _pyshapemerge2d.Vector_taxilength(self)
     def maxnorm(self): return _pyshapemerge2d.Vector_maxnorm(self)
-    def approxlength(self): return _pyshapemerge2d.Vector_approxlength(self)
 Vector_swigregister = _pyshapemerge2d.Vector_swigregister
 Vector_swigregister(Vector)
 
@@ -185,8 +183,6 @@ class Line2(_object):
     def get_tags(self): return _pyshapemerge2d.Line2_get_tags(self)
     def __repr__(self): return _pyshapemerge2d.Line2___repr__(self)
     def reversed(self): return _pyshapemerge2d.Line2_reversed(self)
-    def approx_dist(self, *args): return _pyshapemerge2d.Line2_approx_dist(self, *args)
-    def approx_closest(self, *args): return _pyshapemerge2d.Line2_approx_closest(self, *args)
     def is_vertical(self): return _pyshapemerge2d.Line2_is_vertical(self)
     def get_k(self): return _pyshapemerge2d.Line2_get_k(self)
     def get_m(self): return _pyshapemerge2d.Line2_get_m(self)
@@ -242,11 +238,14 @@ class Polygon(_object):
     def get_shape(self): return _pyshapemerge2d.Polygon_get_shape(self)
     def remove_loops(self): return _pyshapemerge2d.Polygon_remove_loops(self)
     def intersect_line(self, *args): return _pyshapemerge2d.Polygon_intersect_line(self, *args)
-    def naive_area(self): return _pyshapemerge2d.Polygon_naive_area(self)
     def calc_area(self): return _pyshapemerge2d.Polygon_calc_area(self)
+    def naive_double_area(self): return _pyshapemerge2d.Polygon_naive_double_area(self)
+    def naive_area(self): return _pyshapemerge2d.Polygon_naive_area(self)
     def is_inside(self, *args): return _pyshapemerge2d.Polygon_is_inside(self, *args)
     def is_ccw(self): return _pyshapemerge2d.Polygon_is_ccw(self)
     def merge_straight_sections(self): return _pyshapemerge2d.Polygon_merge_straight_sections(self)
+    def get_kind(self): return _pyshapemerge2d.Polygon_get_kind(self)
+    def set_kind(self, *args): return _pyshapemerge2d.Polygon_set_kind(self, *args)
     __swig_destroy__ = _pyshapemerge2d.delete_Polygon
     __del__ = lambda self : None;
 Polygon_swigregister = _pyshapemerge2d.Polygon_swigregister
@@ -258,7 +257,7 @@ class Shape(_object):
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, Shape, name)
     def get_this(self): return _pyshapemerge2d.Shape_get_this(self)
-    def get_polys(self): return _pyshapemerge2d.Shape_get_polys(self)
+    def get_polys(self, *args): return _pyshapemerge2d.Shape_get_polys(self, *args)
     def __eq__(self, *args): return _pyshapemerge2d.Shape___eq__(self, *args)
     def __init__(self, *args): 
         this = _pyshapemerge2d.new_Shape(*args)
@@ -277,6 +276,10 @@ HOLE = _pyshapemerge2d.HOLE
 SOLID = _pyshapemerge2d.SOLID
 VOID = _pyshapemerge2d.VOID
 UNCLASSIFIED = _pyshapemerge2d.UNCLASSIFIED
+
+def bur_tostr(*args):
+  return _pyshapemerge2d.bur_tostr(*args)
+bur_tostr = _pyshapemerge2d.bur_tostr
 class Cell(_object):
     __swig_setmethods__ = {}
     __setattr__ = lambda self, name, value: _swig_setattr(self, Cell, name, value)
@@ -393,7 +396,8 @@ class BooleanOp(_object):
     def step7_classify_cells(self, *args): return _pyshapemerge2d.BooleanOp_step7_classify_cells(self, *args)
     def step8_merge_cells(self): return _pyshapemerge2d.BooleanOp_step8_merge_cells(self)
     def step9_calc_result(self): return _pyshapemerge2d.BooleanOp_step9_calc_result(self)
-    def step9_get_result(self): return _pyshapemerge2d.BooleanOp_step9_get_result(self)
+    def step10_eliminate_enclosed_cells(self): return _pyshapemerge2d.BooleanOp_step10_eliminate_enclosed_cells(self)
+    def step11_get_result(self): return _pyshapemerge2d.BooleanOp_step11_get_result(self)
     __swig_destroy__ = _pyshapemerge2d.delete_BooleanOp
     __del__ = lambda self : None;
 BooleanOp_swigregister = _pyshapemerge2d.BooleanOp_swigregister

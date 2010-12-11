@@ -32,6 +32,7 @@ enum BooleanUpResult
 	VOID, //The stuff outside of all the polygons, beyond the borders of the polygon-populated world
 	UNCLASSIFIED
 };
+const char* bur_tostr(BooleanUpResult);
 
 struct Edge;
 struct Cell
@@ -195,6 +196,7 @@ public:
 	void step5_create_cells(); //TODO: Must be able to determine if a cell is within another cell (maybe separate step)
 	std::vector<Line2> dbg_step5_sort_edges(Vertex v,Line2 incoming,std::vector<Line2> sort,int side);
 	std::vector<Cell> dbg_step5_get_cells();
+	
 	/**
 	 * Determine which polygons cover each cell.
 	 */
@@ -205,15 +207,30 @@ public:
 	void step7_classify_cells(BooleanOpStrategy* strat);
 
 	/**
-	 * Merge cells with the same classification
+	 * Merge adjacent cells with the same classification.
 	 */
 	void step8_merge_cells();
 
+
 	/**
-	 *
+	 * Create resulting Shapes. This is almost the last step, only some
+	 * cleanup of cells enclosed within other cells remains.
 	 */
 	void step9_calc_result();
-	Shape* step9_get_result();
+
+	/**
+	 * Merge cells where one cell is entirely inside another, without
+	 * touching it - but only if the two cells have the same classification.
+	 * I.e, if a hole is containing another hole, the inner hole can be removed.
+	 * If a solid contains another solid, the inner one can be removed.
+	 */
+	void step10_eliminate_enclosed_cells();
+	
+
+    /**
+     * Just returned the computed result
+     */
+	Shape* step11_get_result();
 
 public:
 	//Shape addition();

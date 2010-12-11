@@ -7,13 +7,6 @@ Shape::Shape()
 {
 
 }
-void Shape::remove_polygon_by_idx(int idx)
-{
-    if (idx<0 || idx>=(int)polys.size())
-        throw std::runtime_error("idx out of range in Shape::remove_polygon_by_idx");
-    polys.erase(polys.begin()+idx);
-}
-
 Shape::Shape(const std::string& name,const std::vector<Vertex>& poly) : name(name)
 {
 	polys.push_back(Polygon(poly,Polygon::SOLID,this));
@@ -70,15 +63,20 @@ Shape::Shape(const std::string& name,const std::vector<Polygon>& polys) :
 	BOOST_FOREACH(auto& p,this->polys)
 		p.set_shape(this);
 }
-const std::vector<Polygon>& Shape::get_polys()
+const std::vector<Polygon>& Shape::get_polys() const
 {
 	return polys;
 }
-
-
-
-
-
+std::vector<Polygon>& Shape::get_polys()
+{
+    return polys;
+}
+void Shape::remove_polygon_by_idx(int idx)
+{
+    if (idx<0 || (size_t)idx>=polys.size())
+        throw std::runtime_error("Bad polygon number");
+    polys.erase(polys.begin()+idx);
+}
 
 
 

@@ -16,10 +16,6 @@ namespace shapemerge2d
 		Vector operator-(const Vector& o) const;
 		Vector operator+(const Vector& o) const;
 		bool operator==(const Vector& o) const;
-		int64_t scalarprod(const Vector& o) const
-		{
-		    return x*o.x+y*o.y;
-		}
 		std::string __repr__() const
 		{
 			std::ostringstream os;
@@ -28,7 +24,6 @@ namespace shapemerge2d
 		}
 		int taxilength() const;
 		int maxnorm() const;
-		double approxlength() const;
 	};
 }
 #endif

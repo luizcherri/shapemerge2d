@@ -82,10 +82,26 @@ void Polygon::merge_straight_sections()
 			++i;
 		}
 	}
-    naive_area_impl();
+	naive_area_calc();
+}
+void Polygon::naive_area_calc()
+{
+    doublearea=0;
+    BOOST_FOREACH(const Line2& l,lines)
+    {
+        doublearea+=((l.get_v1().x-l.get_v2().x)*(l.get_v1().y+l.get_v2().y));
+    }
+}
+int64_t Polygon::naive_double_area() const
+{
+    return doublearea;
+}
+int64_t  Polygon::naive_area() const
+{
+    return doublearea/2;
 }
 
-float Polygon::calc_area()
+float Polygon::calc_area() const
 {
     double sum=0;
 	BOOST_FOREACH(const Line2& l,lines)
@@ -139,21 +155,8 @@ enum poly_sides
     start_side,
     other_side
 };
-int64_t Polygon::naive_area() const
-{
-    return area;
-}
-void Polygon::naive_area_impl()
-{
-    int64_t naive=0;
-    BOOST_FOREACH(Line2& line,lines)
-    {
-        naive+=((line.get_v2().x-line.get_v1().x)*(line.get_v1().y+line.get_v2().y))/2;
-    }
-    area=naive;
-}
 
-bool Polygon::is_inside(Vertex v)
+bool Polygon::is_inside(Vertex v) const
 {
     int startindex=-1;
     int minx=INT_MAX;
@@ -162,7 +165,7 @@ bool Polygon::is_inside(Vertex v)
         return false;
     for(size_t i=0;i<lines.size();++i)
     {
-        Line2& a=lines[i];
+        const Line2& a=lines[i];
         if (a.get_v1().get_x()<minx)
             minx=a.get_v1().get_x();
         if (a.get_v1().get_x()>maxx)
@@ -329,8 +332,7 @@ static void merge(const Vertex& start,std::vector<Line2>& ret,const Line2& line)
 }
 
 
-
-std::vector<Line2> Polygon::intersect_line(Line2 b)
+std::vector<Line2> Polygon::intersect_line(Line2 b) const
 {
 	printf("Intersecting poly with line %s\n",b.__repr__().c_str());
     if (lines.size()<3)
@@ -532,7 +534,6 @@ Polygon Polygon::remove_loops() const
 	ret.kind=kind;
 	ret.lines=out;
 	ret.shape=shape;
-	ret.naive_area_impl();
 	return ret;
 }
 

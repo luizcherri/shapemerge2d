@@ -53,7 +53,7 @@ namespace shapemerge2d
 		 * very very flat triangle, then segment each of the three edges
 		 * into many small edges. Some of these small edges will coincide.)
 		 */
-		Polygon() : kind(SOLID),shape(NULL),area(0)
+		Polygon() : kind(SOLID),shape(NULL)
 		{
 		}
 		Polygon(const std::vector<Vertex>& vs,Kind pkind=SOLID,Shape* pshape=NULL) :
@@ -67,7 +67,7 @@ namespace shapemerge2d
 				if (j==(int)vs.size()) j=0;
 				lines.push_back(Line2(vs[i],vs[j]));
 			}
-		    naive_area_impl();
+		    naive_area_calc();
 		}
 		const std::vector<Line2>& get_lines()const;
 		/**
@@ -101,26 +101,29 @@ namespace shapemerge2d
          * the polygon, and part of the original line 'line'.
          * Only works on loop-free (non-self-overlapping), ccw polygons.
          */		
-		std::vector<Line2> intersect_line(Line2 line);
-		
-		/**
-		 * Calculate the area of the polygon, by approximating the area under each line
-		 * segment as (x2-x1)*(y1+y2)/2. 
-		 */
-		int64_t naive_area() const;
-		
+		std::vector<Line2> intersect_line(Line2 line) const;
 		
 		/**
 		 * Calculate area of polygon with a simple method.
-		 * Only works for sane polygons.
+		 * Only works for sane polygons. The returned
+		 * area is only an approximation (although probably
+		 * quite good).
 		 */
-		float calc_area();
+		float calc_area() const;
 		
+		/**
+		 * Returns a naive approximation of the area of the polygon,
+		 * in units of half pixels! Divide this by two to get an approximation of
+		 * real area.
+		 */
+		int64_t naive_double_area() const;
+		/**
+		 * Returns a naive approximation of the area of the polygon.
+		 */
+		int64_t naive_area() const;
 
-        /**
-         * Check if the given vertex is within this polygon.
-         */
-        bool is_inside(Vertex v);		
+        /** Is the given vertex inside this polygon */
+        bool is_inside(Vertex v) const;		
 
 		/**
 		 * Nominal polygons have their vertices in a
@@ -131,15 +134,22 @@ namespace shapemerge2d
 		 */
 		bool is_ccw()const;
 
-        /** modified polygon inplace */
 		void merge_straight_sections();
-
+        Kind get_kind() const
+        {
+            return kind;
+        }
+        void set_kind(Kind pkind)
+        {
+        	kind=pkind;
+        	printf("kind set to: %s\n",get_kind_str().c_str());
+        }
 	private:
+		void naive_area_calc();
 		Kind kind;
 		const Shape* shape;
-		int64_t area;
+		int64_t doublearea;
 		std::vector<Line2> lines;
-        void naive_area_impl();
 
 	};
 
