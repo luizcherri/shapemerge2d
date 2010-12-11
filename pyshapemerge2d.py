@@ -242,6 +242,7 @@ class Polygon(_object):
     def get_shape(self): return _pyshapemerge2d.Polygon_get_shape(self)
     def remove_loops(self): return _pyshapemerge2d.Polygon_remove_loops(self)
     def intersect_line(self, *args): return _pyshapemerge2d.Polygon_intersect_line(self, *args)
+    def naive_area(self): return _pyshapemerge2d.Polygon_naive_area(self)
     def calc_area(self): return _pyshapemerge2d.Polygon_calc_area(self)
     def is_inside(self, *args): return _pyshapemerge2d.Polygon_is_inside(self, *args)
     def is_ccw(self): return _pyshapemerge2d.Polygon_is_ccw(self)
@@ -266,6 +267,7 @@ class Shape(_object):
     def get_name(self): return _pyshapemerge2d.Shape_get_name(self)
     def __repr__(self): return _pyshapemerge2d.Shape___repr__(self)
     def dump(self): return _pyshapemerge2d.Shape_dump(self)
+    def remove_polygon_by_idx(self, *args): return _pyshapemerge2d.Shape_remove_polygon_by_idx(self, *args)
     __swig_destroy__ = _pyshapemerge2d.delete_Shape
     __del__ = lambda self : None;
 Shape_swigregister = _pyshapemerge2d.Shape_swigregister

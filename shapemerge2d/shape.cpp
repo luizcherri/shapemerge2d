@@ -7,6 +7,13 @@ Shape::Shape()
 {
 
 }
+void Shape::remove_polygon_by_idx(int idx)
+{
+    if (idx<0 || idx>=(int)polys.size())
+        throw std::runtime_error("idx out of range in Shape::remove_polygon_by_idx");
+    polys.erase(polys.begin()+idx);
+}
+
 Shape::Shape(const std::string& name,const std::vector<Vertex>& poly) : name(name)
 {
 	polys.push_back(Polygon(poly,Polygon::SOLID,this));

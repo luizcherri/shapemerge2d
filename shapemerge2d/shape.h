@@ -44,6 +44,7 @@ namespace shapemerge2d
 		const std::string& get_name()const{return name;}
 		std::string __repr__()const;
 		std::string dump() const;
+		void remove_polygon_by_idx(int idx);
 	private:
 		std::vector<Polygon> polys;
 	};

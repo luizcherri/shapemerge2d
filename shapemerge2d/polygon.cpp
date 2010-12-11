@@ -82,6 +82,7 @@ void Polygon::merge_straight_sections()
 			++i;
 		}
 	}
+    naive_area_impl();
 }
 
 float Polygon::calc_area()
@@ -138,6 +139,20 @@ enum poly_sides
     start_side,
     other_side
 };
+int64_t Polygon::naive_area() const
+{
+    return area;
+}
+void Polygon::naive_area_impl()
+{
+    int64_t naive=0;
+    BOOST_FOREACH(Line2& line,lines)
+    {
+        naive+=((line.get_v2().x-line.get_v1().x)*(line.get_v1().y+line.get_v2().y))/2;
+    }
+    area=naive;
+}
+
 bool Polygon::is_inside(Vertex v)
 {
     int startindex=-1;
@@ -314,6 +329,7 @@ static void merge(const Vertex& start,std::vector<Line2>& ret,const Line2& line)
 }
 
 
+
 std::vector<Line2> Polygon::intersect_line(Line2 b)
 {
 	printf("Intersecting poly with line %s\n",b.__repr__().c_str());
@@ -486,7 +502,7 @@ std::vector<Line2> Polygon::intersect_line(Line2 b)
     return ret;
 }
 
-Polygon Polygon::remove_loops()
+Polygon Polygon::remove_loops() const
 {
     std::vector<Line2> out;
 	for(size_t i=0;i<lines.size();++i)
@@ -516,6 +532,7 @@ Polygon Polygon::remove_loops()
 	ret.kind=kind;
 	ret.lines=out;
 	ret.shape=shape;
+	ret.naive_area_impl();
 	return ret;
 }
 

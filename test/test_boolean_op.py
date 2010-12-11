@@ -374,9 +374,14 @@ def merge_shapes(shape_a,shape_b,vis=False):
         
     bas=BooleanOrStrategy()
     bo.step7_classify_cells(bas)
-    bo.step8_merge_cells()
-    bo.step9_calc_result()
-    shape=bo.step9_get_result()
+    
+    bo.step8_merge_cells();
+    bo.step9_calc_result();
+    bo.step10_eliminate_enclosed_cells();
+	
+    #bo.step8_merge_cells()
+    #bo.step9_calc_result()
+    shape=bo.step11_get_result()
     polys=list(shape.get_polys())
     if vis:
         plines=set()
@@ -449,7 +454,50 @@ def pyshape(name,data):
         #print "Line: %s:%s"%(n1,outline)
         outv.append(outline.get_v1())
     return Shape(name,vvector(outv))
-        
+    
+def asciart_put(art,x,y,ch):
+    if x<0 or y<0 or x>100 or y>100: raise Exception("Too big shape for asciart")
+    while len(art)<=y:
+        art.append([])
+    line=art[y]
+    while len(line)<=x:
+        line.append(" ")
+    line[x]=ch
+def asciart_line(art,v1,v2,ch):
+    x1,y1=v1
+    x2,y2=v2
+    x1=int(x1)
+    y1=int(y1)
+    x2=int(x2)
+    y2=int(y2)
+    #print x1,y1,x2,y2
+    if abs(x1-x2)<=1 and abs(y1-y2)<=1:
+        asciart_put(art,x1,y1,ch)
+        if x1!=x2 or y1!=y2:
+            asciart_put(art,x2,y2,ch)
+        return
+    xh=(x1+x2)//2
+    yh=(y1+y2)//2
+    asciart_line(art,(x1,y1),(xh,yh),ch)
+    asciart_line(art,(xh,yh),(x2,y2),ch)
+    
+    
+    
+    
+def asciart(shape):
+    c=65
+    asciart=[]
+    for poly in shape.get_polys():
+        for line in poly.get_lines():
+            v1=line.get_v1()
+            v2=line.get_v2()
+            asciart_line(asciart,(v1.get_x(),v1.get_y()),(v2.get_x(),v2.get_y()),chr(c))
+            c+=1
+            if c>ord('Z'):
+                c=65
+    return "\n".join(["".join(line) for line in asciart])
+    
+    
     
 def test_verify_shape1():
     input1=pyshape("leftbox",\
@@ -634,7 +682,107 @@ AAAAAAAAAAAAAB
     assert should_output==real_output
 
 
+def test_verify_shape6():
+    input1=pyshape("leftbox",\
+"""
+FEEEEEEEEEEEEEEEEEEE
+F                  D
+F                  D
+F            CCCCCCD
+F            B
+F            B
+AAAAAAAAAAAAAB
+""")
+    input2=pyshape("rightbox",\
+"""
+   DCCCCCC
+   D     B
+   D     B
+   AAAAAAB
+""")
+    
+    should_output=pyshape("resultbox",\
+"""
+FEEEEEEEEEEEEEEEEEEE
+F                  D
+F                  D
+F            CCCCCCD
+F            B
+F            B
+AAAAAAAAAAAAAB
+""")
+    real_output=merge_shapes(input1,input2,False)    
+    assert should_output==real_output
 
+
+def test_verify_shape7():
+    input1=pyshape("leftbox",\
+"""
+FEEEEEEEEEEEEEEEEEEE
+F                  D
+F                  D
+F            CCCCCCD
+F            B
+F            B
+AAAAAAAAAAAAAB
+""")
+    input2=pyshape("rightbox",\
+"""
+   DCCCCCC
+   D     B
+   D     B
+   AAAAAAB
+""")
+    
+    should_output=pyshape("resultbox",\
+"""
+FEEEEEEEEEEEEEEEEEEE
+F                  D
+F                  D
+F            CCCCCCD
+F            B
+F            B
+AAAAAAAAAAAAAB
+""")
+    real_output=merge_shapes(input1,input2,False)    
+    print asciart(real_output)
+    assert should_output==real_output
+
+
+def test_verify_shape8():
+    input1=pyshape("leftbox",\
+"""
+FEEEEEEEEEEEEEEEEEEE
+F                  D
+F                  D
+F            CCCCCCD
+F            B
+F            B
+AAAAAAAAAAAAAB
+""")
+    input2=pyshape("rightbox",\
+"""
+
+   DCCCCCC
+   D     B
+   D     B
+   AAAAAAB
+
+""")
+    
+    should_output=pyshape("resultbox",\
+"""
+FEEEEEEEEEEEEEEEEEEE
+F                  D
+F                  D
+F            CCCCCCD
+F            B
+F            B
+AAAAAAAAAAAAAB
+""")
+    real_output=merge_shapes(input1,input2,False)    
+    print asciart(real_output)
+    assert should_output==real_output
 
 
 

@@ -53,7 +53,7 @@ namespace shapemerge2d
 		 * very very flat triangle, then segment each of the three edges
 		 * into many small edges. Some of these small edges will coincide.)
 		 */
-		Polygon() : kind(SOLID),shape(NULL)
+		Polygon() : kind(SOLID),shape(NULL),area(0)
 		{
 		}
 		Polygon(const std::vector<Vertex>& vs,Kind pkind=SOLID,Shape* pshape=NULL) :
@@ -67,6 +67,7 @@ namespace shapemerge2d
 				if (j==(int)vs.size()) j=0;
 				lines.push_back(Line2(vs[i],vs[j]));
 			}
+		    naive_area_impl();
 		}
 		const std::vector<Line2>& get_lines()const;
 		/**
@@ -93,7 +94,7 @@ namespace shapemerge2d
 		 * This routine removes all loops, leaving one arbitrarily chosen loop, if
 		 * multiple loops exist.		 
 		 */
-		Polygon remove_loops();
+		Polygon remove_loops() const;
 
         /**
          * Return a set of lines, so that they are all contained within
@@ -103,12 +104,22 @@ namespace shapemerge2d
 		std::vector<Line2> intersect_line(Line2 line);
 		
 		/**
+		 * Calculate the area of the polygon, by approximating the area under each line
+		 * segment as (x2-x1)*(y1+y2)/2. 
+		 */
+		int64_t naive_area() const;
+		
+		
+		/**
 		 * Calculate area of polygon with a simple method.
 		 * Only works for sane polygons.
 		 */
 		float calc_area();
 		
 
+        /**
+         * Check if the given vertex is within this polygon.
+         */
         bool is_inside(Vertex v);		
 
 		/**
@@ -120,12 +131,15 @@ namespace shapemerge2d
 		 */
 		bool is_ccw()const;
 
+        /** modified polygon inplace */
 		void merge_straight_sections();
 
 	private:
 		Kind kind;
 		const Shape* shape;
+		int64_t area;
 		std::vector<Line2> lines;
+        void naive_area_impl();
 
 	};
 
