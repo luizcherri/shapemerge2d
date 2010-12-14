@@ -502,7 +502,7 @@ def asciart(shape):
             c+=1
             if c>ord('Z'):
                 c=65
-    return "\n".join(["".join(line) for line in asciart])
+    return "\n".join(reversed(["".join(line) for line in asciart]))
     
     
     
@@ -826,6 +826,7 @@ def test_verify_shape10():
     input1=pyshape("leftbox",\
 """
 
+
   DCCCC
   D   B
   AAAAB
@@ -851,6 +852,7 @@ AAAAAAB
 """
     print "Merging shapes: ",input1,input2
     real_output=merge_shapes(input1,input2,False)    
+
     asci=asciart(real_output)
     print "============================"
     print asci
@@ -874,12 +876,13 @@ AAAAAAAAB
 """
 
 
-   DCCC
-   D  B
-   AAAB
+      DCCC
+      D  B
+      AAAB                      
 
 
 """)        
+troubleshoot this - why is it wrong?
     print "Merging shapes: ",input1,input2
     real_output=merge_shapes(input1,input2,False)    
     asci=asciart(real_output)

@@ -177,6 +177,10 @@ bool Polygon::is_inside(Vertex v) const
     }
     if (startindex==-1)
     { //all the edges fall on the y-coord of v
+    	//yes, all the edges *start* on the y-coord of v,
+    	//but since the polygon is closed, and every start-vertex
+    	//is also exactly one end-vertex, this means that the
+    	//polygon is degenerate and only covers one pixel row.
         if (v.x>=minx && v.x<=maxx)
             return true;
         else
