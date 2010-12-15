@@ -146,6 +146,7 @@ class Vector(_object):
     def __sub__(self, *args): return _pyshapemerge2d.Vector___sub__(self, *args)
     def __add__(self, *args): return _pyshapemerge2d.Vector___add__(self, *args)
     def __eq__(self, *args): return _pyshapemerge2d.Vector___eq__(self, *args)
+    def scalarprod(self, *args): return _pyshapemerge2d.Vector_scalarprod(self, *args)
     def __repr__(self): return _pyshapemerge2d.Vector___repr__(self)
     def taxilength(self): return _pyshapemerge2d.Vector_taxilength(self)
     def maxnorm(self): return _pyshapemerge2d.Vector_maxnorm(self)
@@ -183,6 +184,8 @@ class Line2(_object):
     def get_tags(self): return _pyshapemerge2d.Line2_get_tags(self)
     def __repr__(self): return _pyshapemerge2d.Line2___repr__(self)
     def reversed(self): return _pyshapemerge2d.Line2_reversed(self)
+    def approx_dist(self, *args): return _pyshapemerge2d.Line2_approx_dist(self, *args)
+    def approx_closest(self, *args): return _pyshapemerge2d.Line2_approx_closest(self, *args)
     def is_vertical(self): return _pyshapemerge2d.Line2_is_vertical(self)
     def get_k(self): return _pyshapemerge2d.Line2_get_k(self)
     def get_m(self): return _pyshapemerge2d.Line2_get_m(self)
@@ -349,6 +352,7 @@ class BooleanOpStrategy(_object):
     __getattr__ = lambda self, name: _swig_getattr(self, BooleanOpStrategy, name)
     def __init__(self, *args, **kwargs): raise AttributeError("No constructor defined - class is abstract")
     __repr__ = _swig_repr
+    def init(self, *args): return _pyshapemerge2d.BooleanOpStrategy_init(self, *args)
     def evaluate(self, *args): return _pyshapemerge2d.BooleanOpStrategy_evaluate(self, *args)
     __swig_destroy__ = _pyshapemerge2d.delete_BooleanOpStrategy
     __del__ = lambda self : None;
@@ -363,11 +367,18 @@ class BooleanOrStrategy(BooleanOpStrategy):
     for _s in [BooleanOpStrategy]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
     __getattr__ = lambda self, name: _swig_getattr(self, BooleanOrStrategy, name)
     __repr__ = _swig_repr
-    def evaluate(self, *args): return _pyshapemerge2d.BooleanOrStrategy_evaluate(self, *args)
+    __swig_setmethods__["shape_a"] = _pyshapemerge2d.BooleanOrStrategy_shape_a_set
+    __swig_getmethods__["shape_a"] = _pyshapemerge2d.BooleanOrStrategy_shape_a_get
+    if _newclass:shape_a = _swig_property(_pyshapemerge2d.BooleanOrStrategy_shape_a_get, _pyshapemerge2d.BooleanOrStrategy_shape_a_set)
+    __swig_setmethods__["shape_b"] = _pyshapemerge2d.BooleanOrStrategy_shape_b_set
+    __swig_getmethods__["shape_b"] = _pyshapemerge2d.BooleanOrStrategy_shape_b_get
+    if _newclass:shape_b = _swig_property(_pyshapemerge2d.BooleanOrStrategy_shape_b_get, _pyshapemerge2d.BooleanOrStrategy_shape_b_set)
     def __init__(self): 
         this = _pyshapemerge2d.new_BooleanOrStrategy()
         try: self.this.append(this)
         except: self.this = this
+    def init(self, *args): return _pyshapemerge2d.BooleanOrStrategy_init(self, *args)
+    def evaluate(self, *args): return _pyshapemerge2d.BooleanOrStrategy_evaluate(self, *args)
     __swig_destroy__ = _pyshapemerge2d.delete_BooleanOrStrategy
     __del__ = lambda self : None;
 BooleanOrStrategy_swigregister = _pyshapemerge2d.BooleanOrStrategy_swigregister

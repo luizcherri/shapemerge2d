@@ -1,4 +1,4 @@
-from pyshapemerge2d import Line2,Vertex,Vector,BooleanOp,Polygon,vvector,Shape,lvector,BooleanOrStrategy
+from pyshapemerge2d import Line2,Vertex,Vector,BooleanOp,Polygon,vvector,Shape,lvector,BooleanOrStrategy,pvector
 
 from visualize import draw_things
 import visualize
@@ -410,7 +410,7 @@ def position_line(s,match):
                 if ypos>max[1]: max[1]=ypos
     return Line2(Vertex(min[0],min[1]),Vertex(max[0],max[1]))
 
-def pyshape(name,data,kind="solid"):
+def pypoly(data,kind="solid"):
     assert data.count("\t")==0
     xpos=1
     ypos=data.count("\n")
@@ -458,9 +458,22 @@ def pyshape(name,data,kind="solid"):
         raise Exception("shouldn't be cw")
     if kind=="hole":
         poly.set_kind(Polygon.HOLE)
-    shape=Shape(name,poly)
+    return poly
+    
+def pyshape(name,*datas):
+    polys=[]
+    for data in datas:
+        if isinstance(data,basestring):
+            kind="solid"
+            polydata=data
+        else:
+            polydata,kind=data
+        polys.append(pypoly(polydata,kind))
+
+    shape=Shape(name,pvector(polys))
     assert shape!=None
     return shape
+
 
 def asciart_put(art,x,y,ch):
     if x<0 or y<0 or x>100 or y>100: raise Exception("Too big shape for asciart")
@@ -823,16 +836,7 @@ AAAAAAB
     
     
 def test_verify_shape10():
-    input1=pyshape("leftbox",\
-"""
-
-
-  DCCCC
-  D   B
-  AAAAB
-
-""","hole")
-    input2=pyshape("rightbox",\
+    input1=pyshape("leftbox",(
 """
 DCCCCCCCC
 D       B
@@ -841,14 +845,36 @@ D       B
 D       B
 D       B
 AAAAAAAAB
+""","solid"),
+                   (
+"""
+
+
+    DCCCCCC
+    D     B
+    AAAAAAB
+
+""","hole"))
+    input2=pyshape("rightbox",\
+"""
+DCCCCCCC
+D      B
+D      B
+D      B
+D      B
+D      B
+AAAAAAAB
 """)        
     should_art=\
 """
-DCCCCCC
-D     B
-D     B
-D     B
-AAAAAAB
+ HHHHHHHHH
+ A       G
+ A       G
+ A      FG
+ A      E
+ A      ED
+ BBBBBBBBC
+
 """
     print "Merging shapes: ",input1,input2
     real_output=merge_shapes(input1,input2,False)    
@@ -857,40 +883,136 @@ AAAAAAB
     print "============================"
     print asci
     print "============================"
-    assert 0
+    assert asci.strip()==should_art.strip()
     
 
 def test_verify_shape11():
-    input1=pyshape("leftbox",\
+    input1=pyshape("leftbox",(
 """
-HGGGGGGGG
-H       F
-H EEEEEEF
-H D
-H DCCCCCC
-H       B
+DCCCCCCCC
+D       B
+D       B
+D       B
+D       B
+D       B
 AAAAAAAAB
+"""),(
+"""
+
+
+  DCCCC
+  D   B
+  AAAAB
+
+
 ""","hole")
+)
     
     input2=pyshape("rightbox",\
 """
 
 
-      DCCC
-      D  B
-      AAAB                      
+    DCCCCC
+    D    B
+    AAAAAB                      
 
 
 """)        
-troubleshoot this - why is it wrong?
+    should="""
+ LLLLLLLLL
+ E       K
+ E DDD   KJ
+ E A C    I
+ E BBC   HI
+ E       G
+ FFFFFFFFG
+
+"""    
+
     print "Merging shapes: ",input1,input2
     real_output=merge_shapes(input1,input2,False)    
     asci=asciart(real_output)
     print "============================"
     print asci
     print "============================"
-    assert 0
+    assert asci.strip()==should.strip()
 
+
+
+def test_verify_shape12():
+    input1=pyshape("leftbox",(
+"""
+DCCCCCCCCCCCC
+D           B
+D           B
+D           B
+D           B
+D           B
+D           B
+D           B
+D           B
+D           B
+AAAAAAAAAAAAB
+"""),(
+"""
+
+
+
+
+  DCCCCCCC
+  D      B
+  D      B
+  D      B
+  D      B
+  D      B
+  AAAAAAAB
+ 
+
+""","hole"),(
+"""
+
+
+
+    DCC
+    D B
+    AAB
+
+
+
+""")
+)
+    
+    input2=pyshape("rightbox",(
+"""
+
+
+    DCCCCCCCCC
+    D        B
+    AAAAAAAAAB                      
+
+
+""","hole"))     
+    should="""
+ LLLLLLLLLLLLL
+ I           K
+ I HHHHHHHH  K
+ I E      G  K
+ I E      G  K
+ I E DCC  G  K
+ I E D B  G  K
+ I E DAB  G  K
+ I FFFFFFFG  K
+ I           K
+ JJJJJJJJJJJJK
+"""    
+
+    print "Merging shapes: ",input1,input2
+    real_output=merge_shapes(input1,input2,False)    
+    asci=asciart(real_output)
+    print "============================"
+    print asci
+    print "============================"
+    assert asci.strip()==should.strip()
     
 def vistest_merge_shapes():    
     for x in xrange(10):

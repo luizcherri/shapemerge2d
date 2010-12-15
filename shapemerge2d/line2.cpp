@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <algorithm>
 #include <math.h>
+#include "vector.h"
 
 namespace shapemerge2d
 {
@@ -12,6 +13,7 @@ static inline Rational absolute(Rational r)
 		return -r;
 	return r;
 }
+
 static inline double todouble(Rational r)
 {
 	return double(r.numerator())/double(r.denominator());
@@ -583,6 +585,39 @@ std::vector<Line2> Line2::intersect2(const Line2& o) const
 	}
 	return ret;
 }
+double Line2::approx_dist(Vertex p)
+{
+    Vertex c=approx_closest(p);
+    double dx=((double)c.x-p.x);
+    double dy=((double)c.y-p.y);
+    double dist=sqrt(dx*dx+dy*dy);
+    return dist;
+}
+
+Vertex Line2::approx_closest(Vertex p)
+{
+	Vertex a=get_v1();
+	Vertex b=get_v2();
+
+	Vector backrel = p-b;
+	Vector frontrel = p-a;
+	Vector dir = b-a;
+	if (frontrel.scalarprod(dir) <= 0) {
+		return a;
+	}
+	if (backrel.scalarprod(dir) >= 0) {
+		return b;
+	}
+	double dirlen=sqrt(dir.x*(double)dir.x+dir.y*(double)dir.y);
+	printf("Dirlen: %f\n",dirlen);fflush(stdout);
+	double dir2x=dir.x/dirlen;
+	double dir2y=dir.y/dirlen;
+	double along = dir2x*frontrel.x+dir2y*frontrel.y;
+	double resx=a.x+dir2x*along;
+	double resy=a.y+dir2y*along;
+	return Vertex((int)(resx+0.5),(int)(resy+0.5));
+}
+
 
 
 

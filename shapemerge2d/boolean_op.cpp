@@ -7,6 +7,7 @@ BooleanOp::BooleanOp()
 {
 	result=NULL;
 	num_merged_polys=0;
+	shape_a=shape_b=0;
 }
 static bool leftmost_edge_is_reversed(Line2 line)
 {
@@ -301,6 +302,9 @@ void BooleanOp::step9_calc_result()
 				leftmost=e;
 			printf("Updated 'leftmost' %p: %s\n",leftmost,leftmost->get_leftmost().__repr__().c_str());
 		}
+		if (cur_classification==VOID)
+			continue; //Make no polygon from the void
+
 		//printf("Finished iterating through pair2edge\n-----------------------------------------\n");
 		assert(leftmost!=NULL);
 
@@ -323,7 +327,6 @@ void BooleanOp::step9_calc_result()
 			startvertex=curedge->v2;
 			curvertex=curedge->v2;
 		}
-
 		std::vector<Vertex> output;
 		output.push_back(curvertex);
 		for(;;)
@@ -381,10 +384,9 @@ void BooleanOp::step9_calc_result()
 			polykind=Polygon::HOLE;
 		else if (cur_classification==SOLID)
 			polykind=Polygon::SOLID;
-		else if (cur_classification==VOID)
-			continue; //Make no polygon from the void
 		else
 		{
+			assert(cur_classification!=VOID);
 			std::ostringstream s;
 			s<<"Found merged cell with invalid classification: "<<cur_classification;
 			throw std::runtime_error(s.str());
@@ -415,6 +417,10 @@ void BooleanOp::step10_eliminate_enclosed_cells()
     //smallest polygon first
 	std::sort(result->get_polys().begin(),result->get_polys().end(),AreaSorter());
 	std::set<Polygon*> holes_inside_someone;
+	printf("----------------------\n");
+    for(size_t idx=0;idx<result->get_polys().size();++idx)
+    	printf("Polygon #%d: %s\n",(int)idx,result->get_polys()[idx].__repr__().c_str());
+	printf("----------------------\n");
     for(size_t idx=0;idx<result->get_polys().size();)
     {	    
         Polygon& poly=result->get_polys()[idx];
@@ -454,7 +460,7 @@ void BooleanOp::step10_eliminate_enclosed_cells()
         {
             printf("Removing polygon #%d\n",subsumed);
             result->remove_polygon_by_idx(subsumed);
-            break;
+            continue;
         }
         else
         {
@@ -467,7 +473,7 @@ void BooleanOp::step10_eliminate_enclosed_cells()
     	if (poly.get_kind()==Polygon::HOLE &&
     		holes_inside_someone.find(&poly)==holes_inside_someone.end())
     	{
-    		printf("Removing hole polygon: #%d, %s, since it is inside nothing.\n",i,poly.get_kind_str().c_str());
+    		printf("Removing hole polygon: #%d, %s, since it is inside nothing.\n",i,poly.__repr__().c_str());
             result->remove_polygon_by_idx(i);
     	}
     }
@@ -553,6 +559,7 @@ void BooleanOp::step6_determine_cell_cover()
 		std::set<const Polygon*> curpolys;
 		std::set<Cell*> visited_cells;
 		printf("  ** startedge: %s\n",startedge->__repr__().c_str());
+		/*
 		BOOST_FOREACH(const Polygon* basepoly,tagmap)
 		{
 			if (basepoly->is_inside(leftmost))
@@ -564,6 +571,7 @@ void BooleanOp::step6_determine_cell_cover()
 				}
 			}
 		}
+		*/
 		if (curpolys.empty())
 			curcell->classification=VOID; //this is the void, no polygon covers it.
 
@@ -609,6 +617,9 @@ void BooleanOp::recurse_determine_cover(Cell* curcell,std::set<const Polygon*> c
 }
 void BooleanOp::step1_add_lines(Shape* shape_a,Shape* shape_b)
 {
+	this->shape_a=shape_a;
+	this->shape_b=shape_b;
+
 	if (shape_a==NULL || shape_b==NULL)
 		throw std::runtime_error("One of the shapes is NULL");
 	BOOST_FOREACH(const Polygon& poly_a,shape_a->get_polys())
@@ -772,7 +783,7 @@ void BooleanOp::step3_create_edges()
 }
 void BooleanOp::step7_classify_cells(BooleanOpStrategy* strat)
 {
-
+	strat->init(shape_a,shape_b);
 	BOOST_FOREACH(Cell* cell,cells)
 	{
 		if (cell==NULL)
@@ -780,25 +791,53 @@ void BooleanOp::step7_classify_cells(BooleanOpStrategy* strat)
 		if (cell->classification!=VOID)
 		{
 			assert(cell->classification==UNCLASSIFIED);
-			cell->classification=strat->evaluate(*cell);
+			if (cell->cover.empty())
+				cell->classification=VOID;
+			else
+				cell->classification=strat->evaluate(*cell);
 		}
 	}
 }
+void BooleanOrStrategy::init(Shape* a,Shape* b)
+{
+	shape_a=a;
+	shape_b=b;
+}
 BooleanUpResult BooleanOrStrategy::evaluate(const Cell& cell)
 {
-	///TODO: Fix this, this is now not OR , for debugging
-	bool anycov=true;
+
+	const Polygon* smallest_a=NULL;
+	const Polygon* smallest_b=NULL;
+	uint64_t smallest_a_area=(uint64_t)-1;
+	uint64_t smallest_b_area=(uint64_t)-1;
+
+
 	BOOST_FOREACH(const Polygon* cov,cell.cover)
 	{
-		if (cov->get_kind()==Polygon::HOLE)
+		uint64_t area=cov->naive_double_area();
+		if (cov->get_shape()==shape_a)
 		{
-			anycov=false;
-			break;
+			if (smallest_a==NULL || area<smallest_a_area)
+			{
+				smallest_a=cov;
+				smallest_a_area=area;
+			}
+		}
+		if (cov->get_shape()==shape_b)
+		{
+			if (smallest_b==NULL || area<smallest_b_area)
+			{
+				smallest_b=cov;
+				smallest_b_area=area;
+			}
 		}
 	}
-	if (anycov)
+	bool asolid=smallest_a ? smallest_a->get_kind()==Polygon::SOLID : false;
+	bool bsolid=smallest_b ? smallest_b->get_kind()==Polygon::SOLID : false;
+	if (asolid || bsolid) //OR Operation
 		return SOLID;
-	return HOLE;
+	else
+		return HOLE;
 }
 std::string Cell::get_classification()
 {
@@ -863,6 +902,7 @@ const char* bur_tostr(BooleanUpResult r)
 void BooleanOp::step8_merge_cells()
 {
 	num_merged_polys=0;
+	std::set<int> is_merged_poly_void;
 	BOOST_FOREACH(Cell* cell,cells)
 	{
 		if (cell->merged_poly!=-1) continue; //Already merged
@@ -885,8 +925,19 @@ void BooleanOp::step8_merge_cells()
 				{
 					Cell* neighcell=neighitem.first;
 					//printf("Considering %s\n",neighcell->__repr__().c_str());
-					if (neighcell->merged_poly==-1 && neighcell->classification==cell->classification)
+					if (neighcell->merged_poly==-1 && (
+							(neighcell->classification==cell->classification) ||
+							(neighcell->classification==HOLE && cell->classification==VOID) ||
+							(neighcell->classification==VOID && cell->classification==HOLE)
+							))
 					{
+						if (neighcell->classification==VOID || cell->classification==VOID)
+						{
+							assert(neighcell->classification!=SOLID);
+							assert(cell->classification!=SOLID);
+							is_merged_poly_void.insert(cur_poly);
+						}
+
 						printf("Merging:\n  ->%s\n  ->%s\n",
 								cell->__repr__().c_str(),
 								neighcell->__repr__().c_str());
@@ -899,6 +950,13 @@ void BooleanOp::step8_merge_cells()
 				}
 			}
 			merge_front.swap(next_merge_front);
+		}
+	}
+	BOOST_FOREACH(Cell* cell,cells)
+	{
+		if (is_merged_poly_void.find(cell->merged_poly)!=is_merged_poly_void.end())
+		{
+			cell->classification=VOID;
 		}
 	}
 

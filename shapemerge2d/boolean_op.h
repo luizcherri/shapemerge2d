@@ -135,10 +135,15 @@ struct VertexPair
 };
 struct BooleanOpStrategy
 {
+	virtual void init(Shape* a,Shape* b)=0;
 	virtual BooleanUpResult evaluate(const Cell& cell)=0;
 };
 struct BooleanOrStrategy : public BooleanOpStrategy
 {
+	Shape* shape_a;
+	Shape* shape_b;
+	BooleanOrStrategy(){shape_a=shape_b=0;}
+	virtual void init(Shape* a,Shape* b);
 	virtual BooleanUpResult evaluate(const Cell& cell);
 
 };
@@ -238,6 +243,8 @@ private:
 	void remove_edge(Line2* line);
 private:
 
+	Shape* shape_a;
+	Shape* shape_b;
 	std::vector<const Polygon*> tagmap;
 	std::vector<Line2> all_lines; //also contains lines which were subsequently identified as dead-ends and removed
 
