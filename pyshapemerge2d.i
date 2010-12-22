@@ -13,6 +13,7 @@
 #include "shapemerge2d/polygon.h" 
 #include "shapemerge2d/shape.h" 
 #include "shapemerge2d/boolean_op.h" 
+#include "shapemerge2d/shapemerge2d.h" 
 using namespace shapemerge2d;
 %}
 
@@ -25,6 +26,7 @@ using namespace shapemerge2d;
 %include "shapemerge2d/polygon.h" 
 %include "shapemerge2d/shape.h" 
 %include "shapemerge2d/boolean_op.h" 
+%include "shapemerge2d/shapemerge2d.h" 
 
 %rename(__eq__) Line2::operator==;
 %rename(__eq__) Vector::operator==;

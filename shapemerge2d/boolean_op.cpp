@@ -48,6 +48,19 @@ static bool leftmost_edge_is_reversed(Line2 line)
 	}
 	return reversed;
 }
+bool Cell::is_enveloping() const
+{
+	if (polygon->is_ccw())
+	{
+		assert(polygon->naive_double_area()>=0);
+		return startside==1;
+	}
+	else
+	{
+		assert(polygon->naive_double_area()<=0);
+		return startside==0;
+	}
+}
 
 void BooleanOp::mark_side(int side_,Edge* edge_)
 {
@@ -55,12 +68,14 @@ void BooleanOp::mark_side(int side_,Edge* edge_)
 		return; //already marked
 	Edge* curedge=edge_;
 	Cell* cell=new Cell();
+	cell->startside=side_;
 	cells.push_back(cell);
 	Vertex last_edge_end=edge_->v1;
 	//printf("Marking cell:%p last_edge_end: %s\n",cell,last_edge_end.__repr__().c_str());
 	for(;;)
 	{
 		int markside=side_; //0 is left side,1 is right side
+		cell->vertices.push_back(last_edge_end);
 		if (last_edge_end==curedge->v2)
 		{
 			markside+=1;
@@ -262,148 +277,6 @@ Vertex Edge::get_leftmost() const
 	return v2;
 }
 
-void BooleanOp::step9_calc_result()
-{
-	std::vector<Polygon> res_polys;
-	for(int cur_merged_poly=0;cur_merged_poly<num_merged_polys;++cur_merged_poly)
-	{
-		if (pair2edge.size()==0) throw std::runtime_error("No edges, can't calculate result");
-		Edge* leftmost=NULL;
-		//find "leftmost" edge of poly marked with 'merged_poly' == cur_merged_poly
-		printf("---------------------------------------\n");
-		printf("Merged poly: #%d: Iterate through pair2edge\n-----------------------------------------\n",cur_merged_poly);
-		BooleanUpResult cur_classification=UNCLASSIFIED;
-		BOOST_FOREACH(auto& eitem,pair2edge)
-		{
-			Edge* e=&(eitem.second);
-			assert(e->side[0] && e->side[1]);
-			if (!(e->side[0]->merged_poly==cur_merged_poly ||
-				  e->side[1]->merged_poly==cur_merged_poly))
-				continue;
-			Cell* cell=NULL;
-			if (e->side[0]->merged_poly==cur_merged_poly)
-				cell=e->side[0];
-			if (e->side[1]->merged_poly==cur_merged_poly)
-				cell=e->side[1];
-			assert(cell);
-			if (cur_classification==UNCLASSIFIED)
-				cur_classification=cell->classification;
-			else
-				assert(cur_classification==cell->classification);
-
-			Vertex v=e->get_leftmost();
-			printf("Leftmost Vertex of edge: %s\n",v.__repr__().c_str());
-			printf("Value of 'leftmost' %p: %s\n",leftmost,leftmost ? leftmost->get_leftmost().__repr__().c_str() : "null");
-			if (leftmost==NULL)
-				leftmost=e;
-			else if (v.x<leftmost->get_leftmost().x)
-				leftmost=e;
-			else if (v.x==leftmost->get_leftmost().x && e->line_k<leftmost->line_k)
-				leftmost=e;
-			printf("Updated 'leftmost' %p: %s\n",leftmost,leftmost->get_leftmost().__repr__().c_str());
-		}
-		if (cur_classification==VOID)
-			continue; //Make no polygon from the void
-
-		//printf("Finished iterating through pair2edge\n-----------------------------------------\n");
-		assert(leftmost!=NULL);
-
-		//The 'leftmost' edge is here known to be
-		//at the edge of a coherent body,
-		//and also to be headed away on a counter clockwise
-		//trip around that body.
-		printf("Left most edge selected: %s\n",leftmost->__repr__().c_str());
-		//Vertex curvertex=leftmost->get_leftmost();
-		//Vertex startvertex=curvertex;
-		Vertex curvertex,startvertex;
-		Edge* curedge=leftmost;
-		if (leftmost_edge_is_reversed(Line2(leftmost->v1,leftmost->v2)))
-		{
-			startvertex=curedge->v1;
-			curvertex=curedge->v1;
-		}
-		else
-		{
-			startvertex=curedge->v2;
-			curvertex=curedge->v2;
-		}
-		std::vector<Vertex> output;
-		output.push_back(curvertex);
-		for(;;)
-		{
-			bool reversed=(curvertex==curedge->v2);
-			Vertex nextvertex=(reversed) ? curedge->v1 : curedge->v2;
-			if (nextvertex==startvertex)
-				break;
-			auto edgemap_it=edgemap.find(nextvertex);
-			assert(edgemap_it!=edgemap.end());
-			std::vector<Edge*> edge_candidates;
-			std::cout<<"Looking for edge candidates, next vertex: "<<nextvertex.__repr__()<<", incoming="<<curedge->v1.__repr__()<<"->"<<curedge->v2.__repr__()<<"\n";
-			std::cout<<"num cands: "<<edgemap_it->second.size()<<"\n";
-			BOOST_FOREACH(Edge* candidate,edgemap_it->second)
-			{
-
-				if (candidate==curedge)
-					continue;
-				std::cout<<"  Candidate="<<candidate->v1.__repr__()<<"->"<<candidate->v2.__repr__()<<"\n";
-				/*
-				find the most counter clockwise edge with boundary
-				to cell with merged_poly_nr
-				*/
-				printf("    Candidate sides: %d/%d - looking for %d\n",
-						candidate->side[0]->merged_poly,
-						candidate->side[1]->merged_poly,
-						cur_merged_poly);
-				bool side0_is=(candidate->side[0]->merged_poly==cur_merged_poly);
-				bool side1_is=(candidate->side[1]->merged_poly==cur_merged_poly);
-				if (side0_is!=side1_is) //A boundary
-				{
-					edge_candidates.push_back(candidate);
-				}
-			}
-			//std::cout<<" ==========================================\n";
-			if (edge_candidates.empty())
-			{
-				std::ostringstream s;
-				s<<"  Couldn't find any matching outgoing edge from: "<<nextvertex.__repr__();
-				throw std::runtime_error(s.str());
-			}
-			//BOOST_FOREACH(Edge* edge,edge_candidates)
-			//	std::cout<<"  chosen="<<edge->v1.__repr__()<<"->"<<edge->v2.__repr__()<<"\n";
-			//std::cout<<"  $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n";
-			EdgeSorter es(nextvertex,curedge,reversed ? 1 : 0);
-			std::sort(edge_candidates.begin(),edge_candidates.end(),es); //FIXME: Don't sort, just find smallest.
-			assert(edge_candidates.size()>0);
-			Edge* nextedge=edge_candidates.front();
-			curedge=nextedge;
-			curvertex=nextvertex;
-			output.push_back(curvertex);
-		}
-		Polygon::Kind polykind=Polygon::HOLE;
-		if (cur_classification==HOLE)
-			polykind=Polygon::HOLE;
-		else if (cur_classification==SOLID)
-			polykind=Polygon::SOLID;
-		else
-		{
-			assert(cur_classification!=VOID);
-			std::ostringstream s;
-			s<<"Found merged cell with invalid classification: "<<cur_classification;
-			throw std::runtime_error(s.str());
-		}
-		Polygon poly(output,polykind);
-		if (!poly.is_ccw())
-		{
-			throw std::runtime_error("Polygon is not ccw");
-		}
-		poly.merge_straight_sections();
-		res_polys.push_back(poly);
-	}
-	if (result!=NULL) delete result;
-	result=new Shape("mergeresult",res_polys);
-
-}
-
 class AreaSorter
 {
     public:
@@ -412,6 +285,7 @@ class AreaSorter
         return a.naive_area()<b.naive_area();
     }
 };
+#if 0
 void BooleanOp::step10_eliminate_enclosed_cells()
 {
     //smallest polygon first
@@ -478,6 +352,7 @@ void BooleanOp::step10_eliminate_enclosed_cells()
     	}
     }
 }
+#endif
 
 Vertex Cell::get_leftmost()
 {
@@ -559,7 +434,8 @@ void BooleanOp::step6_determine_cell_cover()
 		std::set<const Polygon*> curpolys;
 		std::set<Cell*> visited_cells;
 		printf("  ** startedge: %s\n",startedge->__repr__().c_str());
-		/*
+
+
 		BOOST_FOREACH(const Polygon* basepoly,tagmap)
 		{
 			if (basepoly->is_inside(leftmost))
@@ -571,7 +447,8 @@ void BooleanOp::step6_determine_cell_cover()
 				}
 			}
 		}
-		*/
+
+
 		if (curpolys.empty())
 			curcell->classification=VOID; //this is the void, no polygon covers it.
 
@@ -855,7 +732,13 @@ std::string Cell::get_classification()
 std::string Cell::__repr__() const
 {
 	std::ostringstream str;
-	str<<"Cell("<<bur_tostr(classification)<<", "<<edges.size()<<" edges, covered by: [";
+	str<<"Cell("<<bur_tostr(classification)<<", "<<edges.size();
+	if (is_leader)
+		str<<" <leader>";
+	if (is_enveloping())
+		str<<" <envelop>";
+	str<<" merged: "<<merged_poly<<", component: "<<component;
+	str<<" edges, covered by: [";
 	BOOST_FOREACH(const Polygon* cov,cover)
 	{
 		str<<" "<<cov->get_shape()->get_name();
@@ -883,6 +766,92 @@ void BooleanOp::step5_create_cells()
 		mark_side(0,&(it->second));
 		mark_side(1,&(it->second));
 	}
+	BOOST_FOREACH(Cell* cell,cells)
+	{
+		cell->polygon=new Polygon(cell->vertices);
+	}
+}
+static void recursively_mark_component(Cell* cell,ComponentInfo& comp,int curcomp)
+{
+	if (cell->component==curcomp) return;
+	if (cell->component!=-1)
+		throw std::runtime_error("Unexpected error - encountered cell from incomlete recursive-marking op");
+	cell->component=curcomp;
+	if (comp.leader==NULL || cell->polygon->naive_double_area()>comp.leader->polygon->naive_double_area())
+	{
+		if (cell->is_enveloping())
+			comp.leader=cell;
+	}
+	//printf("Marking component #%d: %s\n",curcomp,cell->polygon->__repr__().c_str());
+	BOOST_FOREACH(Edge* edge,cell->edges)
+	{
+		if (edge->side[0])
+			recursively_mark_component(edge->side[0],comp,curcomp);
+		if (edge->side[1])
+			recursively_mark_component(edge->side[1],comp,curcomp);
+	}
+}
+static void mark_components(std::vector<ComponentInfo>& components,std::vector<Cell*> cells)
+{
+	BOOST_FOREACH(Cell* cell,cells)
+	{
+		if (cell->component!=-1) continue;
+		components.push_back(ComponentInfo());
+		recursively_mark_component(cell,components.back(),components.size()-1);
+		//printf("Finished component\n");
+		if (components.back().leader==NULL)
+			throw std::runtime_error("No cells in component?");
+	}
+	BOOST_FOREACH(Cell* cell,cells)
+	{
+		if (cell->component<0 || cell->component>=(int)components.size())
+			throw std::runtime_error("Unexpected component number in cell");
+		if (components[cell->component].leader==cell)
+		{
+			printf("Marking cell as leader for component #%d\n",cell->component);
+			cell->is_leader=true;
+		}
+	}
+}
+void BooleanOp::step5b_determine_cell_hierarchy()
+{
+
+	mark_components(components,cells);
+
+	std::vector<Cell*> sortcells;
+	sortcells=cells;
+	printf("Determine hierarchy: %d\n",(int)sortcells.size());
+	std::sort(sortcells.begin(),sortcells.end(),SortCellsOnArea());
+	for(int idx=0;idx<(int)sortcells.size();++idx)
+	{
+		Cell* curcell=sortcells[idx];
+		if (curcell->vertices.size()<1) throw std::runtime_error("cell has no vertices");
+		if (curcell->is_leader!=true)
+			continue; //only the component leader can have a parent...
+
+		printf("Cell-Polygon: %s:  (area:%ld,component:#%d)\n",
+				curcell->polygon->__repr__().c_str(),curcell->polygon->naive_area(),
+				curcell->component);
+		//this is the exterior of a polygon, or a hole.
+		//these need to be connected to any enveloping polygon
+
+		Vertex curpoint=curcell->vertices[0];
+		for(int i=idx+1;i<(int)sortcells.size();++i)
+		{
+			Cell* outer=sortcells[i];
+			assert(outer->component!=-1);
+			if (outer->component!=curcell->component && outer->polygon->is_inside(curpoint))
+			{//curcell is inside "outer"
+				curcell->parent=outer;
+				outer->children.push_back(curcell);
+				printf("Polygon of area %ld is inside that with %ld\n",
+						curcell->polygon->naive_area(),
+						outer->polygon->naive_area());
+				break;
+			}
+		}
+	}
+
 }
 
 const char* bur_tostr(BooleanUpResult r)
@@ -915,15 +884,24 @@ void BooleanOp::step8_merge_cells()
 		{
 			std::set<Cell*> next_merge_front;
 			//printf("Rerunning through merge front, %d items\n",(int)merge_front.size());
-			BOOST_FOREACH(auto mergecell,merge_front)
+			BOOST_FOREACH(Cell* mergecell,merge_front)
 			{
 				//printf("Merging %s\n======================\n",
 				//		mergecell->__repr__().c_str());
 				if (mergecell->merged_poly!=-1) continue;
 				mergecell->merged_poly=cur_poly;
+				std::vector<Cell*> neighs;
 				BOOST_FOREACH(auto neighitem,mergecell->neighbors)
 				{
 					Cell* neighcell=neighitem.first;
+					neighs.push_back(neighcell);
+				}
+				if (mergecell->parent!=NULL)
+					neighs.push_back(mergecell->parent);
+				BOOST_FOREACH(Cell* child,mergecell->children)
+					neighs.push_back(child);
+				BOOST_FOREACH(Cell* neighcell,neighs)
+				{
 					//printf("Considering %s\n",neighcell->__repr__().c_str());
 					if (neighcell->merged_poly==-1 && (
 							(neighcell->classification==cell->classification) ||
@@ -952,13 +930,169 @@ void BooleanOp::step8_merge_cells()
 			merge_front.swap(next_merge_front);
 		}
 	}
+	printf("=== All Cells after step 8 ===\n");
 	BOOST_FOREACH(Cell* cell,cells)
 	{
 		if (is_merged_poly_void.find(cell->merged_poly)!=is_merged_poly_void.end())
 		{
 			cell->classification=VOID;
 		}
+		printf("%s\n",cell->__repr__().c_str());
 	}
+	printf("==============================\n");
+
+}
+
+void BooleanOp::step9_calc_result()
+{
+	std::vector<Polygon> res_polys;
+	for(int cur_merged_poly=0;cur_merged_poly<num_merged_polys;++cur_merged_poly)
+	{
+		if (pair2edge.size()==0) throw std::runtime_error("No edges, can't calculate result");
+		Edge* leftmost=NULL;
+		//find "leftmost" edge of poly marked with 'merged_poly' == cur_merged_poly
+		printf("---------------------------------------\n");
+		printf("Merged poly: #%d: Iterate through pair2edge\n-----------------------------------------\n",cur_merged_poly);
+		BooleanUpResult cur_classification=UNCLASSIFIED;
+		BOOST_FOREACH(auto& eitem,pair2edge)
+		{
+			Edge* e=&(eitem.second);
+			assert(e->side[0] && e->side[1]);
+			if ((e->side[0]->merged_poly==cur_merged_poly)==
+				  (e->side[1]->merged_poly==cur_merged_poly))
+				continue;
+			Cell* cell=NULL;
+			if (e->side[0]->merged_poly==cur_merged_poly)
+				cell=e->side[0];
+			if (e->side[1]->merged_poly==cur_merged_poly)
+				cell=e->side[1];
+			if (cell->is_leader)
+			{
+				printf("Merged poly #%d is leader of component #%d\n",
+						cur_merged_poly,cell->component);
+				continue; //component leaders shouldn't give polygons
+			}
+			assert(cell);
+			if (cur_classification==UNCLASSIFIED)
+				cur_classification=cell->classification;
+			else
+				assert(cur_classification==cell->classification);
+
+			Vertex v=e->get_leftmost();
+			//printf("Leftmost Vertex of edge: %s\n",v.__repr__().c_str());
+			//printf("Value of 'leftmost' %p: %s\n",leftmost,leftmost ? leftmost->get_leftmost().__repr__().c_str() : "null");
+			if (leftmost==NULL)
+				leftmost=e;
+			else if (v.x<leftmost->get_leftmost().x)
+				leftmost=e;
+			else if (v.x==leftmost->get_leftmost().x && e->line_k<leftmost->line_k)
+				leftmost=e;
+			//printf("Updated 'leftmost' %p: %s\n",leftmost,leftmost->get_leftmost().__repr__().c_str());
+		}
+		if (cur_classification==VOID)
+			continue; //Make no polygon from the void
+		if (leftmost==NULL) //happens if only the component leader is in the merged-poly.
+			continue;
+		//printf("Finished iterating through pair2edge\n-----------------------------------------\n");
+		assert(leftmost!=NULL);
+
+		//The 'leftmost' edge is here known to be
+		//at the edge of a coherent body,
+		//and also to be headed away on a counter clockwise
+		//trip around that body.
+		printf("Left most edge selected: %s\n",leftmost->__repr__().c_str());
+		//Vertex curvertex=leftmost->get_leftmost();
+		//Vertex startvertex=curvertex;
+		Vertex curvertex,startvertex;
+		Edge* curedge=leftmost;
+		if (leftmost_edge_is_reversed(Line2(leftmost->v1,leftmost->v2)))
+		{
+			startvertex=curedge->v1;
+			curvertex=curedge->v1;
+		}
+		else
+		{
+			startvertex=curedge->v2;
+			curvertex=curedge->v2;
+		}
+		std::vector<Vertex> output;
+		output.push_back(curvertex);
+		for(;;)
+		{
+			bool reversed=(curvertex==curedge->v2);
+			Vertex nextvertex=(reversed) ? curedge->v1 : curedge->v2;
+			if (nextvertex==startvertex)
+				break;
+			auto edgemap_it=edgemap.find(nextvertex);
+			assert(edgemap_it!=edgemap.end());
+			std::vector<Edge*> edge_candidates;
+			std::cout<<"Looking for edge candidates, next vertex: "<<nextvertex.__repr__()<<", incoming="<<curedge->v1.__repr__()<<"->"<<curedge->v2.__repr__()<<"\n";
+			std::cout<<"num cands: "<<edgemap_it->second.size()<<"\n";
+			BOOST_FOREACH(Edge* candidate,edgemap_it->second)
+			{
+
+				if (candidate==curedge)
+					continue;
+				std::cout<<"  Candidate="<<candidate->v1.__repr__()<<"->"<<candidate->v2.__repr__()<<"\n";
+				/*
+				find the most counter clockwise edge with boundary
+				to cell with merged_poly_nr
+				*/
+				/*
+				printf("    Candidate sides: %d/%d - looking for %d\n",
+						candidate->side[0]->merged_poly,
+						candidate->side[1]->merged_poly,
+						cur_merged_poly);*/
+				bool side0_is=(candidate->side[0]->merged_poly==cur_merged_poly);
+				bool side1_is=(candidate->side[1]->merged_poly==cur_merged_poly);
+				if (side0_is!=side1_is) //A boundary
+				{
+					//xprintf("")
+					edge_candidates.push_back(candidate);
+				}
+			}
+			//std::cout<<" ==========================================\n";
+			if (edge_candidates.empty())
+			{
+				std::ostringstream s;
+				s<<"  Couldn't find any matching outgoing edge from: "<<nextvertex.__repr__();
+				throw std::runtime_error(s.str());
+			}
+			//BOOST_FOREACH(Edge* edge,edge_candidates)
+			//	std::cout<<"  chosen="<<edge->v1.__repr__()<<"->"<<edge->v2.__repr__()<<"\n";
+			//std::cout<<"  $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n";
+			EdgeSorter es(nextvertex,curedge,reversed ? 1 : 0);
+			std::sort(edge_candidates.begin(),edge_candidates.end(),es); //FIXME: Don't sort, just find smallest.
+			assert(edge_candidates.size()>0);
+			Edge* nextedge=edge_candidates.front();
+			printf("Selected edge:%s\n",nextedge->__repr__().c_str());
+			curedge=nextedge;
+			curvertex=nextvertex;
+			output.push_back(curvertex);
+		}
+		Polygon::Kind polykind=Polygon::HOLE;
+		if (cur_classification==HOLE)
+			polykind=Polygon::HOLE;
+		else if (cur_classification==SOLID)
+			polykind=Polygon::SOLID;
+		else
+		{
+			assert(cur_classification!=VOID);
+			std::ostringstream s;
+			s<<"Found merged cell with invalid classification: "<<cur_classification;
+			throw std::runtime_error(s.str());
+		}
+		printf("Finished generating poly #%ld, outputting it\n",res_polys.size());
+		Polygon poly(output,polykind);
+		if (!poly.is_ccw())
+		{
+			throw std::runtime_error("Polygon is not ccw");
+		}
+		poly.merge_straight_sections();
+		res_polys.push_back(poly);
+	}
+	if (result!=NULL) delete result;
+	result=new Shape("mergeresult",res_polys);
 
 }
 

@@ -27,26 +27,59 @@ namespace shapemerge2d
 	 */
 	class Shape
 	{
-		std::string name;
-		Shape(const Shape&);//noncopyable (Polygons have pointers to their shapes)
 	public:
-		Shape* get_this(){return this;}
-		const std::vector<Polygon>& get_polys()const;
-		std::vector<Polygon>& get_polys();
-		Shape();
-		bool operator==(const Shape& o) const;
-		Shape(const std::string& name,const Polygon poly);
+		Shape(const Shape&);
+		/**
+		 * Create a shape consisting of the given polygons.
+		 * The name can be anything, and is mostly usable for debugging.
+		 */
 		Shape(const std::string& name,const std::vector<Polygon>& poly);
+		/**
+		 * Create a shape containing only the given polygon.
+		 * The name can be anything, and is mostly usable for debugging.
+		 */
+		Shape(const std::string& name,const Polygon poly);
 		/**
 		 * Shortcut to create a shape of only one polygon,
 		 * that polygon being solid.
+		 * The name can be anything, and is mostly usable for debugging.
 		 */
 		Shape(const std::string& name,const std::vector<Vertex>& poly);
+		/**
+		 * Inside the Shape object is a vector of polygons.
+		 * This function returns that vector.
+		 */
+		const std::vector<Polygon>& get_polys()const;
+		/**
+		 * Inside the Shape object is a vector of polygons.
+		 * This function returns that vector.
+		 * You may update this vector.
+		 */
+		std::vector<Polygon>& get_polys();
+		bool operator==(const Shape& o) const;
 		const std::string& get_name()const{return name;}
+		/**
+		 * IMPLEMENTATION DETAIL
+		 * Give a short string representation of this object.
+		 * This is used to get a string representation of this
+		 * object in the Python-based test bench.
+		 */
 		std::string __repr__()const;
+		/**
+		 * IMPLEMENTATION DETAIL
+		 * Print a lot of information about the polygon,
+		 * usable for debugging.
+		 */
 		std::string dump() const;
+		/**
+		 * IMPLEMENTATION DETAIL
+		 * Remove a specific polygon from the Shape.
+		 * Removes the polygon whose index is idx
+		 * in the vector returned by get_polys().
+		 */
         void remove_polygon_by_idx(int idx);
 	private:
+		std::string name;
 		std::vector<Polygon> polys;
 	};
 

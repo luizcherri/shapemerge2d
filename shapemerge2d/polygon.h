@@ -27,16 +27,47 @@ namespace shapemerge2d
 	class Polygon
 	{
 	public:
+		/**
+		 * Polygons can be of two types - HOLE or SOLID.
+		 * A SOLID polygon is simply a normal polygon.
+		 * A HOLE is a polygon which is in fact a hold inside
+		 * some other bigger polygon. HOLEs can never exist
+		 * by themselves. Some polygon-operation libraries
+		 * represent holes by clockwise polygons and SOLIDs
+		 * by counter-clockwise polygons. Shapemerge2d is
+		 * explicit about this instead.
+		 */
 		enum Kind
 		{
 			HOLE,
 			SOLID
 		};
+		/**
+		 * Each Polygon can belong to a Shape (it always should if
+		 * it belongs to a Shape.). Adding a polygon to a Shape
+		 * makes the Shape automatically call this function.
+		 * So you don't need to call this yourself in normal situations.
+		 */
 		void set_shape(const Shape* shape)
 		{
 			this->shape=shape;
 		}
+		/**
+		 * Compare two polygons. This is a slower operation than you
+		 * might expect, since it cares about wether or not the polygons
+		 * are equivalent, not if they have the exact same representation.
+		 * What this means is that even if they don't have the same
+		 * start vertex, as long as they have the same vertices, they
+		 * are identical. They must also have the same kind (HOLE or SOLID)
+		 * to be equal.
+		 * NOTE: If one of the polygons is counter-clockwise, and the other
+		 * is clockwise, they are considered different. This is slightly
+		 * inconsistent, and might change in the future.
+		 */
 		bool operator==(const Polygon& o)const;
+		/**
+		 * Get a string-representation of the kind (HOLE/SOLID) of this polygon.
+		 */
 		std::string get_kind_str() const
 		{
 			switch(kind)
@@ -46,6 +77,9 @@ namespace shapemerge2d
 			}
 			throw std::runtime_error("Internal error in polygon");
 		}
+		/**
+		 * Get a string representation of the polygon.
+		 */
 		std::string __repr__() const;
 		/**
 		 * Caller must ensure that polygon edges do not cross each other.
@@ -56,6 +90,9 @@ namespace shapemerge2d
 		Polygon() : kind(SOLID),shape(NULL)
 		{
 		}
+		/**
+		 *
+		 */
 		Polygon(const std::vector<Vertex>& vs,Kind pkind=SOLID,Shape* pshape=NULL) :
 			kind(pkind),
 			shape(pshape)

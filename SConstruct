@@ -21,6 +21,7 @@ coreenv.SharedLibrary('_pyshapemerge2d.so', [
     "shapemerge2d/vector.cpp",
     "shapemerge2d/polygon.cpp",
     "shapemerge2d/shape.cpp",
-    "shapemerge2d/boolean_op.cpp"
+    "shapemerge2d/boolean_op.cpp",
+    "shapemerge2d/shapemerge2d.cpp"
     ])
     

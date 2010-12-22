@@ -32,8 +32,16 @@ enum BooleanUpResult
 	VOID, //The stuff outside of all the polygons, beyond the borders of the polygon-populated world
 	UNCLASSIFIED
 };
+struct Cell;
+struct ComponentInfo
+{
+	Cell* leader;//encompasser of its component
+	ComponentInfo()
+	{
+		leader=NULL;
+	}
+};
 const char* bur_tostr(BooleanUpResult);
-
 struct Edge;
 struct Cell
 {
@@ -50,14 +58,32 @@ struct Cell
 	BooleanUpResult classification;
 	int merged_poly;
 
+	int component; //which connected component does this belong to?
+	bool is_leader;
+	int startside;
+	Polygon* polygon;
+	std::vector<Vertex> vertices;
+	Cell* parent;
+	std::vector<Cell*> children;
 #endif
-	Cell(){cover_determined=false;classification=UNCLASSIFIED;merged_poly=-1;}
+
+	Cell(){cover_determined=false;classification=UNCLASSIFIED;merged_poly=-1;polygon=0;component=-1;parent=NULL;is_leader=false;startside=-1;}
 	///Calculate the approximate center point of the
 	///cell. This can only be used for heuristics,
 	///since the center point is not really well-defined.
 	///However, the calculation is at least deterministic.
 	//Vertex approx_center() const;
 	//Vertex leftmost_vertex() const;
+
+	/**
+	 * Return true if this cell is an "outside" cell, one which
+	 * has its startside on the outside of the area it envelopes.
+	 * This is logically equivalent to it being a component leader.
+	 * However, it is actually this property that is used to
+	 * calculate the component leader and set the "is_leader" property.
+	 */
+	bool is_enveloping()const;
+
 	int get_merged_poly(){return merged_poly;}
 	Vertex get_leftmost();
 	std::vector<Edge> dbg_get_edges();
@@ -65,6 +91,14 @@ struct Cell
 	std::vector<Cell> get_neighbors();
 	std::string get_classification();
 	std::string __repr__() const;
+};
+class SortCellsOnArea
+{
+public:
+	bool operator()(const Cell* a,const Cell* b) const
+	{
+		return std::abs(a->polygon->naive_double_area())<std::abs(b->polygon->naive_double_area());
+	}
 };
 
 struct Edge
@@ -202,6 +236,8 @@ public:
 	std::vector<Line2> dbg_step5_sort_edges(Vertex v,Line2 incoming,std::vector<Line2> sort,int side);
 	std::vector<Cell> dbg_step5_get_cells();
 	
+	void step5b_determine_cell_hierarchy();
+
 	/**
 	 * Determine which polygons cover each cell.
 	 */
@@ -229,7 +265,7 @@ public:
 	 * I.e, if a hole is containing another hole, the inner hole can be removed.
 	 * If a solid contains another solid, the inner one can be removed.
 	 */
-	void step10_eliminate_enclosed_cells();
+	///void step10_eliminate_enclosed_cells();
 	
 
     /**
@@ -247,7 +283,7 @@ private:
 	Shape* shape_b;
 	std::vector<const Polygon*> tagmap;
 	std::vector<Line2> all_lines; //also contains lines which were subsequently identified as dead-ends and removed
-
+	std::vector<ComponentInfo> components;
 	//std::map<Vertex,std::set<Line2*> > vmap; //maybe remove? Not really needed outside of a few steps?
 	std::map<Line2*,std::set<Vertex> > lmap; //maybe remove? Not really needed outside of a few steps?
 

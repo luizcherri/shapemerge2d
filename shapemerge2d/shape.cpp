@@ -3,10 +3,6 @@
 namespace shapemerge2d
 {
 
-Shape::Shape()
-{
-
-}
 Shape::Shape(const std::string& name,const std::vector<Vertex>& poly) : name(name)
 {
 	polys.push_back(Polygon(poly,Polygon::SOLID,this));
@@ -16,6 +12,11 @@ std::string Shape::__repr__()const
 	std::ostringstream s;
 	s<<"Shape(\""<<name<<"\", "<<polys.size()<< " polygons)";
 	return s.str();
+}
+Shape::Shape(const Shape& o) : name(o.name),polys(o.polys)
+{
+	BOOST_FOREACH(Polygon& po,polys)
+		po.set_shape(this);
 }
 std::string Shape::dump() const
 {
