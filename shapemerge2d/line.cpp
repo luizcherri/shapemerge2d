@@ -613,7 +613,7 @@ Vertex Line::approx_closest(Vertex p)
 		return b;
 	}
 	double dirlen=sqrt(dir.x*(double)dir.x+dir.y*(double)dir.y);
-	printf("Dirlen: %f\n",dirlen);fflush(stdout);
+	//printf("Dirlen: %f\n",dirlen);fflush(stdout);
 	double dir2x=dir.x/dirlen;
 	double dir2y=dir.y/dirlen;
 	double along = dir2x*frontrel.x+dir2y*frontrel.y;

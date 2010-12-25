@@ -78,6 +78,16 @@ namespace shapemerge2d
 		 * in the vector returned by get_polys().
 		 */
         void remove_polygon_by_idx(int idx);
+        /**
+         * Convenience function, equivalent to:
+         * shape_union(*this,other)
+         */
+        Shape merge(const Shape& other) const;
+        /**
+         * Convenience function, equivalent to:
+         * shape_union(*this,Shape("temp",other))
+         */
+        Shape merge(const Polygon& other) const;
 	private:
 		std::string name;
 		std::vector<Polygon> polys;

@@ -30,7 +30,7 @@ namespace shapemerge2d
 		/**
 		 * Polygons can be of two types - HOLE or SOLID.
 		 * A SOLID polygon is simply a normal polygon.
-		 * A HOLE is a polygon which is in fact a hold inside
+		 * A HOLE is a polygon which is in fact a hole inside
 		 * some other bigger polygon. HOLEs can never exist
 		 * by themselves. Some polygon-operation libraries
 		 * represent holes by clockwise polygons and SOLIDs
@@ -163,6 +163,10 @@ namespace shapemerge2d
         bool is_inside(Vertex v) const;		
 
 		/**
+		 *
+		 * Return true if the polgyon has its edges in
+		 * counter-clockwise order.
+		 *
 		 * Nominal polygons have their vertices in a
 		 * counter clockwise order.		 
 		 * This routine requires that the polygon
@@ -179,8 +183,20 @@ namespace shapemerge2d
         void set_kind(Kind pkind)
         {
         	kind=pkind;
-        	printf("kind set to: %s\n",get_kind_str().c_str());
+        	///printf("kind set to: %s\n",get_kind_str().c_str());
         }
+
+        /**
+         * Convenience function, equivalent to:
+         * shape_union(Shape("temp",*this),other)
+         */
+        Shape merge(const Shape& other) const;
+        /**
+         * Convenience function, equivalent to:
+         * shape_union(Shape("a",*this),Shape("b",other))
+         */
+        Shape merge(const Polygon& other) const;
+
 	private:
 		void naive_area_calc();
 		Kind kind;

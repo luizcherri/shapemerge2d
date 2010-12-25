@@ -30,4 +30,21 @@ Shape shape_union(const Polygon& a,const Polygon& b)
 	return shape_union(sa,sb);
 }
 
+Shape Polygon::merge(const Shape& other) const
+{
+	return shape_union(Shape("temp",*this),other);
+}
+Shape Polygon::merge(const Polygon& other) const
+{
+	return shape_union(Shape("a",*this),Shape("b",other));
+}
+Shape Shape::merge(const Shape& other) const
+{
+	return shape_union(*this,other);
+}
+Shape Shape::merge(const Polygon& other) const
+{
+	return shape_union(*this,Shape("temp",other));
+}
+
 }

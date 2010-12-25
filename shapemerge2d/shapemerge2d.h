@@ -30,8 +30,8 @@ namespace shapemerge2d
 	 * consists of multiple Line objects. Each Line has a start and end point,
 	 * represented by one Vertex object each.
 	 *
-	 * \section Simple usage
-	 *
+	 * \section Getting Started
+	 * See this example: \ref example1.cpp
 	 *
 	 *
 	 */
