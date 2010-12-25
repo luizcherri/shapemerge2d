@@ -1,0 +1,26 @@
+Welcome to shapemerge2d!
+
+shapemerge2d is a library to merge 2-dimensional polygons. That is, if you 
+have a bunch of overlapping polygons, shapemerge2d can give you back a set
+of non-overlapping polygons, covering the same area. It merges overlapping
+polygons into bigger polygons.
+
+The reason for writing this library was that there is a shortage of small,
+do-one-thing-and-do-it-well open sources libraries for 2D-polygon geometry.
+There is such open-source code, but it is usually a part of some bigger
+library. Also, many lack unit tests, and many also lack a maintainer.
+
+Thus, shapemerge2d was created. It is certainly not perfect, and it is
+missing a lot of functionality that people are likely to want. The author
+is offering it to the open-source community in the hope that it will be 
+useful, and hopes that smarter minds will use it as a foundation to build a much
+better library upon!
+
+To build it, install 'scons', and then type:
+
+> scons
+
+In the top-level directory (where this file is).
+
+
+

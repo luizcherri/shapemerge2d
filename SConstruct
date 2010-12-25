@@ -2,7 +2,7 @@ import distutils.sysconfig
 import os
 
 coreenv = Environment(
-    CCFLAGS=['-Wall','-Werror','-ggdb','-std=c++0x',"-I."]
+    CCFLAGS=['-Os','-Wall','-ggdb','-std=c++0x',"-I."]
     )
 
 swig_env = coreenv.Clone()
