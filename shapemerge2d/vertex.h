@@ -45,5 +45,13 @@ namespace shapemerge2d
 	};
 //	extern Vertex origin;
 }
+#ifndef SWIG
+
+inline std::ostream& operator<<(std::ostream& os,const shapemerge2d::Vertex& x)
+{
+	os<<x.__repr__();
+	return os;
+}
+#endif
 
 #endif

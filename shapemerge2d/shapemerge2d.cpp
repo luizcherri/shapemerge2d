@@ -3,8 +3,10 @@
 namespace shapemerge2d
 {
 
-Shape shape_union(Shape& shape_a,Shape& shape_b)
+Shape shape_union(const Shape& shape_ca,const Shape& shape_cb)
 {
+	Shape shape_a=shape_ca;
+	Shape shape_b=shape_cb;
     BooleanOp bo;
     bo.step1_add_lines(&shape_a,&shape_b);
     bo.step2_intersect_lines();
@@ -21,4 +23,11 @@ Shape shape_union(Shape& shape_a,Shape& shape_b)
     Shape ret=*bo.step11_get_result();
     return ret;
 }
+Shape shape_union(const Polygon& a,const Polygon& b)
+{
+	Shape sa("a",a);
+	Shape sb("b",b);
+	return shape_union(sa,sb);
+}
+
 }

@@ -1,10 +1,11 @@
 #ifndef SHAPE_MERGE_POLYGON_INCLUDED
 #define SHAPE_MERGE_POLYGON_INCLUDED
 #include <vector>
-#include "line2.h"
+#include "line.h"
 namespace shapemerge2d
 {
 
+	class Shape;
 	/**
 	 * A polygon is defined by a set of points, and a type.
 	 * The set of points define a space, by connecting lines
@@ -23,7 +24,6 @@ namespace shapemerge2d
 	 * There is a line between the last vertex and the first vertex,
 	 * guaranteeing that all polygons are always closed.
 	 */
-	class Shape;
 	class Polygon
 	{
 	public:
@@ -102,11 +102,11 @@ namespace shapemerge2d
 			{
 				int j=i+1;
 				if (j==(int)vs.size()) j=0;
-				lines.push_back(Line2(vs[i],vs[j]));
+				lines.push_back(Line(vs[i],vs[j]));
 			}
 		    naive_area_calc();
 		}
-		const std::vector<Line2>& get_lines()const;
+		const std::vector<Line>& get_lines()const;
 		/**
 		 * Return the vertex with the lowest x coordinate, and if several have
 		 * the same, the one with the lowest y coodinate.
@@ -138,7 +138,7 @@ namespace shapemerge2d
          * the polygon, and part of the original line 'line'.
          * Only works on loop-free (non-self-overlapping), ccw polygons.
          */		
-		std::vector<Line2> intersect_line(Line2 line) const;
+		std::vector<Line> intersect_line(Line line) const;
 		
 		/**
 		 * Calculate area of polygon with a simple method.
@@ -186,12 +186,20 @@ namespace shapemerge2d
 		Kind kind;
 		const Shape* shape;
 		int64_t doublearea;
-		std::vector<Line2> lines;
+		std::vector<Line> lines;
 
 	};
 
 
 }
+#ifndef SWIG
+inline std::ostream& operator<<(std::ostream& os,const shapemerge2d::Polygon& x)
+{
+	os<<x.__repr__();
+	return os;
+}
+#endif
+
 
 
 

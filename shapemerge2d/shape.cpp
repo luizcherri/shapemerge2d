@@ -53,7 +53,7 @@ bool Shape::operator==(const Shape& o) const
 	return true;
 }
 
-Shape::Shape(const std::string& name,const Polygon poly) : name(name)
+Shape::Shape(const std::string& name,const Polygon& poly) : name(name)
 {
 	polys.push_back(poly);
 	polys.back().set_shape(this);

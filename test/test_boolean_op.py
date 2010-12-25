@@ -1,4 +1,4 @@
-from pyshapemerge2d import Line2,Vertex,Vector,BooleanOp,Polygon,vvector,Shape,lvector,BooleanOrStrategy,pvector,shape_union
+from pyshapemerge2d import Line,Vertex,Vector,BooleanOp,Polygon,vvector,Shape,lvector,BooleanOrStrategy,pvector,shape_union
 
 from visualize import draw_things
 import visualize
@@ -19,48 +19,48 @@ def test_edge_sort():
             y=b*cos(ang)+a*sin(ang)
             return vorig(int(x),int(y))
         for side in [0,1]: 
-            l=Line2(Vertex(-10,0),Vertex(0,0))
+            l=Line(Vertex(-10,0),Vertex(0,0))
             tosort=lvector([
-                    Line2(Vertex(0,0),Vertex(-10,10)),
-                    Line2(Vertex(0,0),Vertex(0,10)),
-                    Line2(Vertex(0,0),Vertex(10,10))])
+                    Line(Vertex(0,0),Vertex(-10,10)),
+                    Line(Vertex(0,0),Vertex(0,10)),
+                    Line(Vertex(0,0),Vertex(10,10))])
             out=list(b.dbg_step5_sort_edges(v,l,tosort,side))
             if side==0:
-                assert out[0]==Line2(Vertex(0,0),Vertex(-10,10))
-                assert out[1]==Line2(Vertex(0,0),Vertex(0,10))
-                assert out[2]==Line2(Vertex(0,0),Vertex(10,10))
+                assert out[0]==Line(Vertex(0,0),Vertex(-10,10))
+                assert out[1]==Line(Vertex(0,0),Vertex(0,10))
+                assert out[2]==Line(Vertex(0,0),Vertex(10,10))
             else:
-                assert out[2]==Line2(Vertex(0,0),Vertex(-10,10))
-                assert out[1]==Line2(Vertex(0,0),Vertex(0,10))
-                assert out[0]==Line2(Vertex(0,0),Vertex(10,10))
+                assert out[2]==Line(Vertex(0,0),Vertex(-10,10))
+                assert out[1]==Line(Vertex(0,0),Vertex(0,10))
+                assert out[0]==Line(Vertex(0,0),Vertex(10,10))
                 
             tosort=lvector([
-                    Line2(Vertex(0,0),Vertex(-10,10)),
-                    Line2(Vertex(0,10),Vertex(0,0)),
-                    Line2(Vertex(0,0),Vertex(10,10))])
+                    Line(Vertex(0,0),Vertex(-10,10)),
+                    Line(Vertex(0,10),Vertex(0,0)),
+                    Line(Vertex(0,0),Vertex(10,10))])
             out=list(b.dbg_step5_sort_edges(v,l,tosort,side))
             if side==0:
-                assert out[0]==Line2(Vertex(0,0),Vertex(-10,10))
-                assert out[1]==Line2(Vertex(0,10),Vertex(0,0))
-                assert out[2]==Line2(Vertex(0,0),Vertex(10,10))
+                assert out[0]==Line(Vertex(0,0),Vertex(-10,10))
+                assert out[1]==Line(Vertex(0,10),Vertex(0,0))
+                assert out[2]==Line(Vertex(0,0),Vertex(10,10))
             else:
-                assert out[2]==Line2(Vertex(0,0),Vertex(-10,10))
-                assert out[1]==Line2(Vertex(0,10),Vertex(0,0))
-                assert out[0]==Line2(Vertex(0,0),Vertex(10,10))
+                assert out[2]==Line(Vertex(0,0),Vertex(-10,10))
+                assert out[1]==Line(Vertex(0,10),Vertex(0,0))
+                assert out[0]==Line(Vertex(0,0),Vertex(10,10))
                 
             tosort=lvector([
-                    Line2(Vertex(-10,10),Vertex(0,0)),
-                    Line2(Vertex(0,10),Vertex(0,0)),
-                    Line2(Vertex(0,0),Vertex(10,10))])
+                    Line(Vertex(-10,10),Vertex(0,0)),
+                    Line(Vertex(0,10),Vertex(0,0)),
+                    Line(Vertex(0,0),Vertex(10,10))])
             out=list(b.dbg_step5_sort_edges(v,l,tosort,side))
             if side==0:
-                assert out[0]==Line2(Vertex(-10,10),Vertex(0,0))
-                assert out[1]==Line2(Vertex(0,10),Vertex(0,0))
-                assert out[2]==Line2(Vertex(0,0),Vertex(10,10))
+                assert out[0]==Line(Vertex(-10,10),Vertex(0,0))
+                assert out[1]==Line(Vertex(0,10),Vertex(0,0))
+                assert out[2]==Line(Vertex(0,0),Vertex(10,10))
             else:
-                assert out[2]==Line2(Vertex(-10,10),Vertex(0,0))
-                assert out[1]==Line2(Vertex(0,10),Vertex(0,0))
-                assert out[0]==Line2(Vertex(0,0),Vertex(10,10))
+                assert out[2]==Line(Vertex(-10,10),Vertex(0,0))
+                assert out[1]==Line(Vertex(0,10),Vertex(0,0))
+                assert out[0]==Line(Vertex(0,0),Vertex(10,10))
                 
 
 class NondirLine(object):
@@ -101,22 +101,22 @@ def vistest_add_lines():
     #print "The found, split lines:"
     #print "\n".join(str(x) for x in lines)
     assert len(lines)==12
-    assert Line2(Vertex(0,0),Vertex(2,0)) in lines
-    assert Line2(Vertex(2,0),Vertex(2,1)) in lines
-    assert Line2(Vertex(2,1),Vertex(2,2)) in lines
-    assert Line2(Vertex(2,2),Vertex(1,2)) in lines
-    assert Line2(Vertex(1,2),Vertex(0,2)) in lines
-    assert Line2(Vertex(0,2),Vertex(0,0)) in lines
-    assert Line2(Vertex(1,1),Vertex(2,1)) in lines
-    assert Line2(Vertex(2,1),Vertex(3,1)) in lines    
-    assert Line2(Vertex(3,1),Vertex(3,3)) in lines
-    assert Line2(Vertex(3,3),Vertex(1,3)) in lines
-    assert Line2(Vertex(1,3),Vertex(1,2)) in lines
-    assert Line2(Vertex(1,2),Vertex(1,1)) in lines
+    assert Line(Vertex(0,0),Vertex(2,0)) in lines
+    assert Line(Vertex(2,0),Vertex(2,1)) in lines
+    assert Line(Vertex(2,1),Vertex(2,2)) in lines
+    assert Line(Vertex(2,2),Vertex(1,2)) in lines
+    assert Line(Vertex(1,2),Vertex(0,2)) in lines
+    assert Line(Vertex(0,2),Vertex(0,0)) in lines
+    assert Line(Vertex(1,1),Vertex(2,1)) in lines
+    assert Line(Vertex(2,1),Vertex(3,1)) in lines    
+    assert Line(Vertex(3,1),Vertex(3,3)) in lines
+    assert Line(Vertex(3,3),Vertex(1,3)) in lines
+    assert Line(Vertex(1,3),Vertex(1,2)) in lines
+    assert Line(Vertex(1,2),Vertex(1,1)) in lines
     
     bo.step3_create_edges()
     edges=bo.dbg_step3_and_4_get_edges()    
-    edgelines=dict((Line2(edge.get_v1(),edge.get_v2()),edge) for edge in edges)
+    edgelines=dict((Line(edge.get_v1(),edge.get_v2()),edge) for edge in edges)
     
     assert set(edgelines.keys())==set(lines) 
     for key,edge in edgelines.items():
@@ -130,7 +130,7 @@ def vistest_add_lines():
     
     bo.step4_eliminate_deadends()
     edges=bo.dbg_step3_and_4_get_edges()    
-    edgelines=dict((Line2(edge.get_v1(),edge.get_v2()),edge) for edge in edges)
+    edgelines=dict((Line(edge.get_v1(),edge.get_v2()),edge) for edge in edges)
     
     assert set(edgelines.keys())==set(lines) 
     for key,edge in edgelines.items():
@@ -154,7 +154,7 @@ def vistest_add_lines():
     def lineset2(*vertices):
         s=set()
         for v1,v2 in zip(vertices,vertices[1:]+vertices[:1]):
-            s.add(Line2(v1,v2))
+            s.add(Line(v1,v2))
         return frozenset(s)
             
     facit_cells={
@@ -283,48 +283,48 @@ def test_edge_sort():
             y=b*cos(ang)+a*sin(ang)
             return vorig(int(x),int(y))
         for side in [0,1]: 
-            l=Line2(Vertex(-10,0),Vertex(0,0))
+            l=Line(Vertex(-10,0),Vertex(0,0))
             tosort=lvector([
-                    Line2(Vertex(0,0),Vertex(-10,10)),
-                    Line2(Vertex(0,0),Vertex(0,10)),
-                    Line2(Vertex(0,0),Vertex(10,10))])
+                    Line(Vertex(0,0),Vertex(-10,10)),
+                    Line(Vertex(0,0),Vertex(0,10)),
+                    Line(Vertex(0,0),Vertex(10,10))])
             out=list(b.dbg_step5_sort_edges(v,l,tosort,side))
             if side==0:
-                assert out[0]==Line2(Vertex(0,0),Vertex(-10,10))
-                assert out[1]==Line2(Vertex(0,0),Vertex(0,10))
-                assert out[2]==Line2(Vertex(0,0),Vertex(10,10))
+                assert out[0]==Line(Vertex(0,0),Vertex(-10,10))
+                assert out[1]==Line(Vertex(0,0),Vertex(0,10))
+                assert out[2]==Line(Vertex(0,0),Vertex(10,10))
             else:
-                assert out[2]==Line2(Vertex(0,0),Vertex(-10,10))
-                assert out[1]==Line2(Vertex(0,0),Vertex(0,10))
-                assert out[0]==Line2(Vertex(0,0),Vertex(10,10))
+                assert out[2]==Line(Vertex(0,0),Vertex(-10,10))
+                assert out[1]==Line(Vertex(0,0),Vertex(0,10))
+                assert out[0]==Line(Vertex(0,0),Vertex(10,10))
                 
             tosort=lvector([
-                    Line2(Vertex(0,0),Vertex(-10,10)),
-                    Line2(Vertex(0,10),Vertex(0,0)),
-                    Line2(Vertex(0,0),Vertex(10,10))])
+                    Line(Vertex(0,0),Vertex(-10,10)),
+                    Line(Vertex(0,10),Vertex(0,0)),
+                    Line(Vertex(0,0),Vertex(10,10))])
             out=list(b.dbg_step5_sort_edges(v,l,tosort,side))
             if side==0:
-                assert out[0]==Line2(Vertex(0,0),Vertex(-10,10))
-                assert out[1]==Line2(Vertex(0,10),Vertex(0,0))
-                assert out[2]==Line2(Vertex(0,0),Vertex(10,10))
+                assert out[0]==Line(Vertex(0,0),Vertex(-10,10))
+                assert out[1]==Line(Vertex(0,10),Vertex(0,0))
+                assert out[2]==Line(Vertex(0,0),Vertex(10,10))
             else:
-                assert out[2]==Line2(Vertex(0,0),Vertex(-10,10))
-                assert out[1]==Line2(Vertex(0,10),Vertex(0,0))
-                assert out[0]==Line2(Vertex(0,0),Vertex(10,10))
+                assert out[2]==Line(Vertex(0,0),Vertex(-10,10))
+                assert out[1]==Line(Vertex(0,10),Vertex(0,0))
+                assert out[0]==Line(Vertex(0,0),Vertex(10,10))
                 
             tosort=lvector([
-                    Line2(Vertex(-10,10),Vertex(0,0)),
-                    Line2(Vertex(0,10),Vertex(0,0)),
-                    Line2(Vertex(0,0),Vertex(10,10))])
+                    Line(Vertex(-10,10),Vertex(0,0)),
+                    Line(Vertex(0,10),Vertex(0,0)),
+                    Line(Vertex(0,0),Vertex(10,10))])
             out=list(b.dbg_step5_sort_edges(v,l,tosort,side))
             if side==0:
-                assert out[0]==Line2(Vertex(-10,10),Vertex(0,0))
-                assert out[1]==Line2(Vertex(0,10),Vertex(0,0))
-                assert out[2]==Line2(Vertex(0,0),Vertex(10,10))
+                assert out[0]==Line(Vertex(-10,10),Vertex(0,0))
+                assert out[1]==Line(Vertex(0,10),Vertex(0,0))
+                assert out[2]==Line(Vertex(0,0),Vertex(10,10))
             else:
-                assert out[2]==Line2(Vertex(-10,10),Vertex(0,0))
-                assert out[1]==Line2(Vertex(0,10),Vertex(0,0))
-                assert out[0]==Line2(Vertex(0,0),Vertex(10,10))
+                assert out[2]==Line(Vertex(-10,10),Vertex(0,0))
+                assert out[1]==Line(Vertex(0,10),Vertex(0,0))
+                assert out[0]==Line(Vertex(0,0),Vertex(10,10))
                 
 
 class NondirLine(object):
@@ -349,7 +349,7 @@ def dump_cells(bo):
     for cell in list(bo.dbg_step5_get_cells()):
         sqs=[]
         for edge in list(cell.dbg_get_edges()):
-            line=Line2(edge.get_v1(),edge.get_v2())
+            line=Line(edge.get_v1(),edge.get_v2())
             sqs.append(visualize.Line(
                 line.get_v1().get_x(),
                 line.get_v1().get_y(),
@@ -410,7 +410,7 @@ def position_line(s,match):
                 if xpos>max[0]: max[0]=xpos
                 if ypos<min[1]: min[1]=ypos
                 if ypos>max[1]: max[1]=ypos
-    return Line2(Vertex(min[0],min[1]),Vertex(max[0],max[1]))
+    return Line(Vertex(min[0],min[1]),Vertex(max[0],max[1]))
 
 def pypoly(data,kind="solid"):
     assert data.count("\t")==0
@@ -441,18 +441,18 @@ def pypoly(data,kind="solid"):
         if len(endpoints)==1:
             endpoints.append(endpoints[0])
         assert(len(endpoints)==2)
-        lines.append((c,Line2(endpoints[0],endpoints[1])))
+        lines.append((c,Line(endpoints[0],endpoints[1])))
     lines.sort()
     #print "C,poss: ",lines
     outv=[]
     last=None
     for (n1,line1),(n2,line2) in izip(lines,lines[1:]+lines[:1]):
         if not ((line1.get_v2()-line2.get_v1()).taxilength()==1 or (line1.get_v2()-line2.get_v2()).taxilength()==1):
-            line1=Line2(line1.get_v2(),line1.get_v1())            
+            line1=Line(line1.get_v2(),line1.get_v1())            
         if (line1.get_v2()-line2.get_v1()).taxilength()==1:
-            outline=Line2(line1.get_v1(),line2.get_v1())
+            outline=Line(line1.get_v1(),line2.get_v1())
         elif (line1.get_v2()-line2.get_v2()).taxilength()==1:
-            outline=Line2(line1.get_v1(),line2.get_v2())
+            outline=Line(line1.get_v1(),line2.get_v2())
         else:
             raise Exception("Unexpected error - bad input-data?")
         #print "Line: %s:%s"%(n1,outline)
@@ -560,7 +560,7 @@ def vistest_merge_shapes():
         cnt=0
         #print "Edges: %s"%(edges,)
         for edge in edges:
-            line=Line2(edge.get_v1(),edge.get_v2())
+            line=Line(edge.get_v1(),edge.get_v2())
             r=(25*cnt)%128+128
             g=(128*cnt)%128+128
             b=(64*cnt)%128+128
@@ -590,7 +590,7 @@ def vistest_merge_shapes():
         for cell in list(bo.dbg_step5_get_cells()):
             sqs=[]
             for edge in list(cell.dbg_get_edges()):
-                line=Line2(edge.get_v1(),edge.get_v2())
+                line=Line(edge.get_v1(),edge.get_v2())
                 sqs.append(visualize.Line(
                     line.get_v1().get_x(),
                     line.get_v1().get_y(),

@@ -6,7 +6,7 @@
 #include "vector.h"
 #include "polygon.h"
 #include "shape.h"
-#include "line2.h"
+#include "line.h"
 
 namespace shapemerge2d
 {
@@ -14,7 +14,7 @@ namespace shapemerge2d
 struct SortAlongLine
 {
 	Vertex lstart;
-	SortAlongLine(const Line2& pl) : lstart(pl.get_v1())
+	SortAlongLine(const Line& pl) : lstart(pl.get_v1())
 	{
 	}
 	bool operator()(const Vertex& a,const Vertex& b) const
@@ -206,7 +206,7 @@ public:
 	 * the set of all vertices.
 	 */
 	void step2_intersect_lines();
-	std::vector<Line2> dbg_step2_get_split_lines();
+	std::vector<Line> dbg_step2_get_split_lines();
 
 	/**
 	 * Create the 'edge' objects. Each edge has two
@@ -233,7 +233,7 @@ public:
 	 * is a _cell_.
 	 */
 	void step5_create_cells(); //TODO: Must be able to determine if a cell is within another cell (maybe separate step)
-	std::vector<Line2> dbg_step5_sort_edges(Vertex v,Line2 incoming,std::vector<Line2> sort,int side);
+	std::vector<Line> dbg_step5_sort_edges(Vertex v,Line incoming,std::vector<Line> sort,int side);
 	std::vector<Cell> dbg_step5_get_cells();
 	
 	void step5b_determine_cell_hierarchy();
@@ -276,16 +276,16 @@ public:
 public:
 	//Shape addition();
 private:
-	void remove_edge(Line2* line);
+	void remove_edge(Line* line);
 private:
 
 	Shape* shape_a;
 	Shape* shape_b;
 	std::vector<const Polygon*> tagmap;
-	std::vector<Line2> all_lines; //also contains lines which were subsequently identified as dead-ends and removed
+	std::vector<Line> all_lines; //also contains lines which were subsequently identified as dead-ends and removed
 	std::vector<ComponentInfo> components;
-	//std::map<Vertex,std::set<Line2*> > vmap; //maybe remove? Not really needed outside of a few steps?
-	std::map<Line2*,std::set<Vertex> > lmap; //maybe remove? Not really needed outside of a few steps?
+	//std::map<Vertex,std::set<Line*> > vmap; //maybe remove? Not really needed outside of a few steps?
+	std::map<Line*,std::set<Vertex> > lmap; //maybe remove? Not really needed outside of a few steps?
 
 	std::set<Vertex> vertices;
 	std::map<VertexPair,Edge> pair2edge;

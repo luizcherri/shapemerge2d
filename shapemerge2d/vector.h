@@ -5,6 +5,10 @@
 namespace shapemerge2d
 {
 
+	/**
+	 * The vector class represents a vector with integer components.
+	 * It represents the differences between two vertices.
+	 */
 	struct Vector
 	{
 		int x,y;
@@ -27,7 +31,16 @@ namespace shapemerge2d
 			return os.str();
 		}
 		int taxilength() const;
+		double approxlength() const;
 		int maxnorm() const;
 	};
 }
+#ifndef SWIG
+inline std::ostream& operator<<(std::ostream& os,const shapemerge2d::Vector& x)
+{
+	os<<x.__repr__();
+	return os;
+}
+#endif
+
 #endif

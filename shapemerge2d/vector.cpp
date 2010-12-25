@@ -1,11 +1,16 @@
 #include "shapemerge2d/vector.h"
 #include <algorithm>
+#include <math.h>
 
 namespace shapemerge2d
 {
 
 	Vector::Vector(int px,int py) : x(px),y(py)
 	{
+	}
+	double Vector::approxlength() const
+	{
+		return sqrt((double)x*(double)x+(double)y*(double)y);
 	}
 	Vector::Vector() : x(0),y(0)
 	{

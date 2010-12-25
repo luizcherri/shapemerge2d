@@ -9,7 +9,7 @@ BooleanOp::BooleanOp()
 	num_merged_polys=0;
 	shape_a=shape_b=0;
 }
-static bool leftmost_edge_is_reversed(Line2 line)
+static bool leftmost_edge_is_reversed(Line line)
 {
 	bool reversed=false;
 	if (line.get_v1().x<line.get_v2().x)
@@ -190,7 +190,7 @@ struct EdgeSorter
 	}
 };
 
-std::vector<Line2> BooleanOp::dbg_step5_sort_edges(Vertex v,Line2 incoming,std::vector<Line2> tosort,int side)
+std::vector<Line> BooleanOp::dbg_step5_sort_edges(Vertex v,Line incoming,std::vector<Line> tosort,int side)
 {
 	std::vector<Edge> e;
 	BOOST_FOREACH(auto l,tosort)
@@ -202,9 +202,9 @@ std::vector<Line2> BooleanOp::dbg_step5_sort_edges(Vertex v,Line2 incoming,std::
 		ep.push_back(&l);
 	std::sort(ep.begin(),ep.end(),es);
 
-	std::vector<Line2> ret;
+	std::vector<Line> ret;
 	BOOST_FOREACH(auto& edg,ep)
-		ret.push_back(Line2(edg->v1,edg->v2));
+		ret.push_back(Line(edg->v1,edg->v2));
 	return ret;
 }
 
@@ -426,7 +426,7 @@ void BooleanOp::step6_determine_cell_cover()
 		assert(startedge->side[0]!=NULL && startedge->side[1]!=NULL);
 
 		int sid=0;
-		if (leftmost_edge_is_reversed(Line2(startedge->v1,startedge->v2)))
+		if (leftmost_edge_is_reversed(Line(startedge->v1,startedge->v2)))
 			sid=1;
 
 		Cell* curcell=startedge->side[sid];
@@ -502,7 +502,7 @@ void BooleanOp::step1_add_lines(Shape* shape_a,Shape* shape_b)
 	BOOST_FOREACH(const Polygon& poly_a,shape_a->get_polys())
 	{
 		tagmap.push_back(&poly_a);
-		BOOST_FOREACH(Line2 line_a,poly_a.get_lines())
+		BOOST_FOREACH(Line line_a,poly_a.get_lines())
 		{
 			line_a.add_tag(tagmap.size()-1);
 			all_lines.push_back(line_a);
@@ -511,7 +511,7 @@ void BooleanOp::step1_add_lines(Shape* shape_a,Shape* shape_b)
 	BOOST_FOREACH(const Polygon& poly_b,shape_b->get_polys())
 	{
 		tagmap.push_back(&poly_b);
-		BOOST_FOREACH(Line2 line_b,poly_b.get_lines())
+		BOOST_FOREACH(Line line_b,poly_b.get_lines())
 		{
 			line_b.add_tag(tagmap.size()-1);
 			all_lines.push_back(line_b);
@@ -522,11 +522,11 @@ void BooleanOp::step1_add_lines(Shape* shape_a,Shape* shape_b)
 void BooleanOp::step2_intersect_lines()
 {
 
-	std::vector<Line2>::iterator ita=all_lines.begin();
+	std::vector<Line>::iterator ita=all_lines.begin();
 	std::set<Vertex> isect_vert;
 	for(;ita!=all_lines.end();++ita)
 	{
-		std::vector<Line2>::iterator itb=all_lines.begin();
+		std::vector<Line>::iterator itb=all_lines.begin();
 		for(;itb!=all_lines.end();++itb)
 		{
 			if (ita==itb) continue;
@@ -536,7 +536,7 @@ void BooleanOp::step2_intersect_lines()
 			BOOST_FOREACH(Vertex v,ret)
 			{
 				//std::cout<<"Resulting in "<<v.__repr__()<<"\n";
-				//std::set<Line2*>& lines_of_vertex=vmap[v];
+				//std::set<Line*>& lines_of_vertex=vmap[v];
 				//lines_of_vertex.insert(&*ita);
 				//lines_of_vertex.insert(&*itb);
 				lmap[&*ita].insert(v);
@@ -609,10 +609,10 @@ std::vector<Edge> BooleanOp::dbg_step3_and_4_get_edges()
 	}
 	return edges;
 }
-std::vector<Line2> BooleanOp::dbg_step2_get_split_lines()
+std::vector<Line> BooleanOp::dbg_step2_get_split_lines()
 {
-	std::vector<Line2> out;
-	BOOST_FOREACH(Line2& l,all_lines)
+	std::vector<Line> out;
+	BOOST_FOREACH(Line& l,all_lines)
 	{
 		assert(lmap.find(&l)!=lmap.end());
 		std::set<Vertex>& tver=lmap[&l];
@@ -624,14 +624,14 @@ std::vector<Line2> BooleanOp::dbg_step2_get_split_lines()
 		{
 			Vertex v1=ver[i-1];
 			Vertex v2=ver[i];
-			out.push_back(Line2(v1,v2));
+			out.push_back(Line(v1,v2));
 		}
 	}
 	return out;
 }
 void BooleanOp::step3_create_edges()
 {
-	BOOST_FOREACH(Line2& l,all_lines)
+	BOOST_FOREACH(Line& l,all_lines)
 	{
 		std::set<Vertex>& tver=lmap[&l];
 		std::vector<Vertex> ver;
@@ -1005,7 +1005,7 @@ void BooleanOp::step9_calc_result()
 		//Vertex startvertex=curvertex;
 		Vertex curvertex,startvertex;
 		Edge* curedge=leftmost;
-		if (leftmost_edge_is_reversed(Line2(leftmost->v1,leftmost->v2)))
+		if (leftmost_edge_is_reversed(Line(leftmost->v1,leftmost->v2)))
 		{
 			startvertex=curedge->v1;
 			curvertex=curedge->v1;

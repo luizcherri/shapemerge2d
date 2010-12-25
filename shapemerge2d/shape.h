@@ -38,7 +38,7 @@ namespace shapemerge2d
 		 * Create a shape containing only the given polygon.
 		 * The name can be anything, and is mostly usable for debugging.
 		 */
-		Shape(const std::string& name,const Polygon poly);
+		Shape(const std::string& name,const Polygon& poly);
 		/**
 		 * Shortcut to create a shape of only one polygon,
 		 * that polygon being solid.
@@ -82,10 +82,14 @@ namespace shapemerge2d
 		std::string name;
 		std::vector<Polygon> polys;
 	};
-
-
-
-
 }
+#ifndef SWIG
+
+inline std::ostream& operator<<(std::ostream& os,const shapemerge2d::Shape& shape)
+{
+	os<<shape.__repr__();
+	return os;
+}
+#endif
 
 #endif

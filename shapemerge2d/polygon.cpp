@@ -1,5 +1,5 @@
 #include "polygon.h"
-#include "line2.h"
+#include "line.h"
 #include "math.h"
 #include "limits.h"
 #include "vector.h"
@@ -8,7 +8,7 @@ namespace shapemerge2d
 {
 
 
-const std::vector<Line2>& Polygon::get_lines() const
+const std::vector<Line>& Polygon::get_lines() const
 {
 	return lines;
 }
@@ -46,7 +46,7 @@ std::string Polygon::__repr__() const
 {
 	std::ostringstream s;
 	s<<"Polygon("<<get_kind_str()<<",\n";
-	BOOST_FOREACH(const Line2& l,lines)
+	BOOST_FOREACH(const Line& l,lines)
 	{
 		s<<l.__repr__()<<"\n";
 	}
@@ -62,8 +62,8 @@ void Polygon::merge_straight_sections()
 		if (i>=lines.size()) //can be >, if last item is removed
 			break;
 		int nexti=(i+1)%lines.size();
-		Line2& one=lines[i];
-		Line2& two=lines[nexti];
+		Line& one=lines[i];
+		Line& two=lines[nexti];
 		assert(one.get_v2()==two.get_v1());
 		if (
 				(one.get_k()==two.get_k() &&
@@ -74,7 +74,7 @@ void Polygon::merge_straight_sections()
 				one.get_v1().x==two.get_v1().x)
 			)
 		{
-			one=Line2(one.get_v1(),two.get_v2(),one.get_k(),one.get_m());
+			one=Line(one.get_v1(),two.get_v2(),one.get_k(),one.get_m());
 			lines.erase(lines.begin()+nexti);
 		}
 		else
@@ -87,7 +87,7 @@ void Polygon::merge_straight_sections()
 void Polygon::naive_area_calc()
 {
     doublearea=0;
-    BOOST_FOREACH(const Line2& l,lines)
+    BOOST_FOREACH(const Line& l,lines)
     {
         doublearea+=((l.get_v1().x-l.get_v2().x)*(l.get_v1().y+l.get_v2().y));
     }
@@ -104,7 +104,7 @@ int64_t  Polygon::naive_area() const
 float Polygon::calc_area() const
 {
     double sum=0;
-	BOOST_FOREACH(const Line2& l,lines)
+	BOOST_FOREACH(const Line& l,lines)
 	{
 	    bool up=false;
 	    if (l.get_y1_inexact()<l.get_y2_inexact())
@@ -124,7 +124,7 @@ Vertex Polygon::lower_left_vertex() const
 {
 	if (lines.size()==0) throw std::runtime_error("Polygon has no edges!");
 	Vertex most=lines[0].get_v1();
-	BOOST_FOREACH(const Line2& l,lines)
+	BOOST_FOREACH(const Line& l,lines)
 	{
 		Vertex vs[2]={l.get_v1(),l.get_v2()};
 		for(int i=0;i<2;++i)
@@ -138,14 +138,14 @@ Vertex Polygon::lower_left_vertex() const
 }
 
 /*
-std::vector<Line2> Polygon::intersect_line(Line2 line)
+std::vector<Line> Polygon::intersect_line(Line line)
 {
     for(size_t i=0;i<lines.size();++i)
 	{
-	    Line2& a=lines[i];
-	    std::vector<Line2> isect=line.intersect(a);
+	    Line& a=lines[i];
+	    std::vector<Line> isect=line.intersect(a);
 	    
-        Line2& start_a=isect[1];
+        Line& start_a=isect[1];
 	    
 	}
 }
@@ -165,7 +165,7 @@ bool Polygon::is_inside(Vertex v) const
         return false;
     for(size_t i=0;i<lines.size();++i)
     {
-        const Line2& a=lines[i];
+        const Line& a=lines[i];
         if (a.get_v1().get_x()<minx)
             minx=a.get_v1().get_x();
         if (a.get_v1().get_x()>maxx)
@@ -187,17 +187,17 @@ bool Polygon::is_inside(Vertex v) const
             return false;
     }
     //printf("Startindex: %d\n",startindex);
-    Line2 exiter=Line2(v,Vertex(minx-1,v.y));
+    Line exiter=Line(v,Vertex(minx-1,v.y));
     int crossings=0;
     for(size_t ti=0;ti<lines.size();++ti)
     {
         
-        Line2 a=lines[(startindex+ti)%lines.size()];
-        std::vector<Line2> isect=exiter.intersect(a);
+        Line a=lines[(startindex+ti)%lines.size()];
+        std::vector<Line> isect=exiter.intersect(a);
         //printf("Intersect of %s and %s: %d\n",exiter.__repr__().c_str(),a.__repr__().c_str(),(int)isect.size());
         if (isect.empty())
             continue;
-        Line2 middle=isect[0];
+        Line middle=isect[0];
         assert(middle.get_v1().get_y()==v.y);
         assert(middle.get_v2().get_y()==v.y);
         int mid_min_x=std::min(middle.get_v1().get_x(),middle.get_v2().get_x());
@@ -293,7 +293,7 @@ struct Event
     
 };
 
-static void merge(const Vertex& start,std::vector<Line2>& ret,const Line2& line)
+static void merge(const Vertex& start,std::vector<Line>& ret,const Line& line)
 {
 	if (ret.empty())
 	{
@@ -316,7 +316,7 @@ static void merge(const Vertex& start,std::vector<Line2>& ret,const Line2& line)
 		if (offline2>offret2)
 		{
 			//merge
-			ret.back()=Line2(ret.back().get_v1(),line.get_v2(),line.get_k(),line.get_m());
+			ret.back()=Line(ret.back().get_v1(),line.get_v2(),line.get_k(),line.get_m());
 			printf("      Merging line: %s, new back: %s\n",line.__repr__().c_str(),
 					ret.back().__repr__().c_str());
 		}
@@ -336,7 +336,7 @@ static void merge(const Vertex& start,std::vector<Line2>& ret,const Line2& line)
 }
 
 
-std::vector<Line2> Polygon::intersect_line(Line2 b) const
+std::vector<Line> Polygon::intersect_line(Line b) const
 {
 	printf("Intersecting poly with line %s\n",b.__repr__().c_str());
     if (lines.size()<3)
@@ -356,7 +356,7 @@ std::vector<Line2> Polygon::intersect_line(Line2 b) const
 	if (starti==-1)
 	{ //Very special case - the entire polygon falls upon the line!
 		printf("Polygon falls on single line!\n");
-	    return std::vector<Line2>();
+	    return std::vector<Line>();
 	}
 	int curi=starti;
 	std::vector<Event> events;
@@ -365,16 +365,16 @@ std::vector<Line2> Polygon::intersect_line(Line2 b) const
 	for(size_t i=0;i<lines.size();++i,++curi)
 	{
 		curi%=lines.size();
-	    Line2 a=lines[curi];
+	    Line a=lines[curi];
 	    printf("#%d line of polygon: %s\n",curi,a.__repr__().c_str());
-	    std::vector<Line2> res=b.intersect(a);
+	    std::vector<Line> res=b.intersect(a);
 	    //int last_excursion=-1;
 	    //int start_inside=-1; //1 = start inside, 0 = start outside
 	    if (res.size())
 	    {
-	    	Line2 middle=res[0];
-	        Line2 start_a=res[2];
-	        Line2 end_a=res[4];
+	    	Line middle=res[0];
+	        Line start_a=res[2];
+	        Line end_a=res[4];
 	    	/*if (middle.get_v2()!=end_b.get_v1())
 	    		middle=middle.reversed();*/
 
@@ -440,7 +440,7 @@ std::vector<Line2> Polygon::intersect_line(Line2 b) const
 	std::sort(events.begin(),events.end());
 	if (events.size()==0)
 	{
-	    std::vector<Line2> ret;
+	    std::vector<Line> ret;
 	    if (is_inside(b.get_v1()))
 	    {
 	    	printf("The line is entirely inside the polygon\n");
@@ -477,7 +477,7 @@ std::vector<Line2> Polygon::intersect_line(Line2 b) const
 		printf("  #%d: %s\n",i,events[i].repr().c_str());
 	}
 
-    std::vector<Line2> ret;
+    std::vector<Line> ret;
     level=0;
     Rational k=b.get_k();
     Rational m=b.get_m();
@@ -489,7 +489,7 @@ std::vector<Line2> Polygon::intersect_line(Line2 b) const
     	if (events[i].is_exit())
     	{
     		printf("   Processing EXIT_EVENT %s\n",events[i].p.__repr__().c_str());
-    		merge(b.get_v1(),ret,Line2(last_enter,events[i].p,k,m));
+    		merge(b.get_v1(),ret,Line(last_enter,events[i].p,k,m));
     		--level;
     		assert(level>=0);
     	}
@@ -503,27 +503,27 @@ std::vector<Line2> Polygon::intersect_line(Line2 b) const
         }
     }
     if (level>0)
-		merge(b.get_v1(),ret,Line2(last_enter,b.get_v2(),k,m));
+		merge(b.get_v1(),ret,Line(last_enter,b.get_v2(),k,m));
 
     return ret;
 }
 
 Polygon Polygon::remove_loops() const
 {
-    std::vector<Line2> out;
+    std::vector<Line> out;
 	for(size_t i=0;i<lines.size();++i)
 	{
-	    Line2 a=lines[i];
+	    Line a=lines[i];
 	    restart:
     	for(size_t j=lines.size()-1;j>i+1;--j)
     	{
     	    if (i==0 && j==lines.size()-1) continue; //special case - first line does not 'overlap' with last.
-    	    Line2 b=lines[j];
-    	    std::vector<Line2> isect=a.intersect(b);
+    	    Line b=lines[j];
+    	    std::vector<Line> isect=a.intersect(b);
     	    if (isect.size())
     	    { //intersect
-    	        Line2& start_a=isect[1];
-    	        Line2& end_b=isect[4];
+    	        Line& start_a=isect[1];
+    	        Line& end_b=isect[4];
     	        assert(start_a.get_v2()==end_b.get_v1());
     	        out.push_back(start_a);
     	        i=j;

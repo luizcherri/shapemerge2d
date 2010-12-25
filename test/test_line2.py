@@ -1,4 +1,4 @@
-from pyshapemerge2d import Line2,Vertex,Vector
+from pyshapemerge2d import Line,Vertex,Vector
 from visualize import draw_things,Square
 import visualize
 import random
@@ -63,11 +63,11 @@ def visualize_diff(lines,extras=[]):
 
 def showtest_vis():
     print "test vis"
-    l=Line2(Vertex(-5,-5),Vertex(5,5))
+    l=Line(Vertex(-5,-5),Vertex(5,5))
     visualize_diff([(l,(255,0,0))])
 
 def test_split():
-    l=Line2(Vertex(0,0),Vertex(2,5))
+    l=Line(Vertex(0,0),Vertex(2,5))
     for splitpoint in [Vertex(0,0),
                        Vertex(1,3),
                        Vertex(2,5)
@@ -76,13 +76,13 @@ def test_split():
         assert points(la).union(points(lb))==points(l)
                    
 def test_downslope():
-    l=Line2(Vertex(0,5),Vertex(7,0))
+    l=Line(Vertex(0,5),Vertex(7,0))
     vs=list(l.slow_all_vertices())
     #visualize_diff([(l,(255,0,0))])
     assert(Vertex(0,5) in vs)
     assert(Vertex(7,0) in vs)
 def test_downslope2():
-    l=Line2(Vertex(7,0),Vertex(0,5))
+    l=Line(Vertex(7,0),Vertex(0,5))
     vs=list(l.slow_all_vertices())
     #visualize_diff(vs,vs,l,l)
     assert(Vertex(7,0) in vs)
@@ -98,8 +98,8 @@ def all_pairs(seq):
 
     
 def test_intersection_ex1():    
-    la=Line2(Vertex(5,5),Vertex(3,2))
-    lb=Line2(Vertex(4,1),Vertex(4,5))
+    la=Line(Vertex(5,5),Vertex(3,2))
+    lb=Line(Vertex(4,1),Vertex(4,5))
     print "la: %s, lb: %s"%(la,lb)
     ls=list(la.intersection_points(lb))
     print "ls:",ls
@@ -115,13 +115,13 @@ def test_intersection_ex1():
     #                (ls[0],(0,0,255)),
     #                ],[])
 def test_intersection_ex2():    
-    la=Line2(Vertex(0,2),Vertex(2,2))
-    lb=Line2(Vertex(1,1),Vertex(1,4))
+    la=Line(Vertex(0,2),Vertex(2,2))
+    lb=Line(Vertex(1,1),Vertex(1,4))
     ls=list(la.intersection_points(lb))
     assert set(ls)==set([Vertex(1,2)])
 def test_intersection_ex3():    
-    la=Line2(Vertex(0,2),Vertex(2,2))
-    lb=Line2(Vertex(1,4),Vertex(1,1))
+    la=Line(Vertex(0,2),Vertex(2,2))
+    lb=Line(Vertex(1,4),Vertex(1,1))
     ls=list(la.intersection_points(lb))
     print "Actual: %s"%(ls,)
     assert set(ls)==set([Vertex(1,2)])
@@ -130,7 +130,7 @@ def test_adjacency():
     def r():
         return random.randint(-50,50)
     for x in xrange(1000):
-        la=Line2(Vertex(r(),r()),Vertex(r(),r()))
+        la=Line(Vertex(r(),r()),Vertex(r(),r()))
         lp=points(la)
         for p in lp:
             found=False
@@ -146,8 +146,8 @@ def test_intersection2():
         return random.randint(-50,50)
     random.seed(0)
     for x in xrange(1000):
-        la=Line2(Vertex(r(),r()),Vertex(r(),r()))
-        lb=Line2(Vertex(r(),r()),Vertex(r(),r()))
+        la=Line(Vertex(r(),r()),Vertex(r(),r()))
+        lb=Line(Vertex(r(),r()),Vertex(r(),r()))
         if not points(la).intersection(points(lb)):
             continue        
         ls=list(la.intersect2(lb))
@@ -174,8 +174,8 @@ def test_intersection():
         return random.randint(-50,50)
     random.seed(0)
     for x in xrange(1000):
-        la=Line2(Vertex(r(),r()),Vertex(r(),r()))
-        lb=Line2(Vertex(r(),r()),Vertex(r(),r()))
+        la=Line(Vertex(r(),r()),Vertex(r(),r()))
+        lb=Line(Vertex(r(),r()),Vertex(r(),r()))
         if not points(la).intersection(points(lb)):
             continue
         try:
@@ -232,7 +232,7 @@ def test_intersection():
                                 ])
             raise
 def test_side_of1():
-    l=Line2(Vertex(0,0),Vertex(10,0))    
+    l=Line(Vertex(0,0),Vertex(10,0))    
     assert l.side_of_extrapolated_line(Vertex(5,5))==-1
     assert l.side_of_extrapolated_line(Vertex(5,-5))==1
     assert l.side_of_extrapolated_line(Vertex(15,5))==-1
@@ -242,43 +242,43 @@ def test_side_of1():
     assert l.side_of_extrapolated_line(Vertex(-5,0))==0
     assert l.side_of_extrapolated_line(Vertex(5,0))==0
     assert l.side_of_extrapolated_line(Vertex(15,0))==0
-    r=Line2(Vertex(10,0),Vertex(0,0))    
+    r=Line(Vertex(10,0),Vertex(0,0))    
     assert r.side_of_extrapolated_line(Vertex(5,5))==1
     assert r.side_of_extrapolated_line(Vertex(5,-5))==-1
     
 def test_side_of2():    
-    l=Line2(Vertex(0,0),Vertex(1,10))
+    l=Line(Vertex(0,0),Vertex(1,10))
     assert l.side_of_extrapolated_line(Vertex(0,10))==-1
     assert l.side_of_extrapolated_line(Vertex(1,0))==1
     assert l.side_of_extrapolated_line(Vertex(1,8))==0
     assert l.side_of_extrapolated_line(Vertex(0,2))==0
 
 def test_side_of3():    
-    l=Line2(Vertex(0,0),Vertex(1,1000000))
+    l=Line(Vertex(0,0),Vertex(1,1000000))
     assert l.side_of_extrapolated_line(Vertex(1000000,0))==1
     assert l.side_of_extrapolated_line(Vertex(-1000000,0))==-1
     assert l.side_of_extrapolated_line(Vertex(0,100000))==0
     assert l.side_of_extrapolated_line(Vertex(1000000,2000000))==1
 
 def test_side_of4():
-    l=Line2(Vertex(0,0),Vertex(0,10))    
+    l=Line(Vertex(0,0),Vertex(0,10))    
     assert l.side_of_extrapolated_line(Vertex(5,5))==1
     assert l.side_of_extrapolated_line(Vertex(-5,5))==-1
     assert l.side_of_extrapolated_line(Vertex(0,5))==0
-    r=Line2(Vertex(0,10),Vertex(0,0))    
+    r=Line(Vertex(0,10),Vertex(0,0))    
     assert r.side_of_extrapolated_line(Vertex(5,5))==-1
     assert r.side_of_extrapolated_line(Vertex(-5,5))==1
     assert r.side_of_extrapolated_line(Vertex(0,5))==0
 
 def test_line_closest():
-    l=Line2(Vertex(0,0),Vertex(10,0))    
+    l=Line(Vertex(0,0),Vertex(10,0))    
     assert l.approx_closest(Vertex(5,0))==Vertex(5,0)
     assert l.approx_closest(Vertex(-5,0))==Vertex(0,0)
     assert l.approx_closest(Vertex(15,0))==Vertex(10,0)
     assert l.approx_closest(Vertex(5,5))==Vertex(5,0)
     assert abs(l.approx_dist(Vertex(5,5))-5)<1e-5
     
-    l=Line2(Vertex(1127808,639680),Vertex(1120704,642752))
+    l=Line(Vertex(1127808,639680),Vertex(1120704,642752))
     p=Vertex(1141685,587443)
     dist=l.approx_dist(p)
     print "Dist: ",dist

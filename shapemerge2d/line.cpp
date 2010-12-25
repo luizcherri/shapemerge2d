@@ -1,23 +1,44 @@
 #include "line.h"
-#include "first_octant.h"
 #include <stdexcept>
 #include <stdio.h>
 #include <algorithm>
+#include <math.h>
+#include "vector.h"
 
 namespace shapemerge2d
 {
-int floor2(int a, int b)
+static inline Rational absolute(Rational r)
 {
-	return floor(Rational(a, b));
+	if (r<0)
+		return -r;
+	return r;
 }
-int ceil2(int a, int b)
+
+static inline double todouble(Rational r)
 {
-	return ceil(Rational(a, b));
+	return double(r.numerator())/double(r.denominator());
 }
 void Line::add_tag(int tag)
 {
 	tags.insert(tag);
 }
+bool Line::operator==(const Line& o) const
+{
+	return v1==o.v1 && v2==o.v2;
+}
+bool Line::operator!=(const Line& o) const
+{
+	return !(v1==o.v1 && v2==o.v2);
+}
+bool Line::operator<(const Line& o) const
+{
+	if (v1<o.v1)
+		return true;
+	if (o.v1<v1)
+		return false;
+	return v2<o.v2;
+}
+
 void Line::add_tags(const std::set<int>& newtags)
 {
 	std::set<int>::iterator it = newtags.begin();
@@ -25,30 +46,8 @@ void Line::add_tags(const std::set<int>& newtags)
 		tags.insert(*it);
 }
 
-int Line::grid_maxnorm() const
-{
-	int fx1 = floor(x1);
-	int fy1 = floor(y1);
-	int fx2 = floor(x2);
-	int fy2 = floor(y2);
-	int dx = std::abs(fx2 - fx1);
-	int dy = std::abs(fy2 - fy1);
-	return std::max(dx, dy);
 
-}
-
-int Line::grid_maxnorm(const FirstOctant& oct) const
-{
-	int fx1 = oct.floor_x(x1);
-	int fy1 = oct.floor_y(y1);
-	int fx2 = oct.floor_x(x2);
-	int fy2 = oct.floor_y(y2);
-	int dx = std::abs(fx2 - fx1);
-	int dy = std::abs(fy2 - fy1);
-	return std::max(dx, dy);
-}
-
-long floor(Rational r)
+long ratfloor(Rational r)
 {
 	int64_t a = r.numerator();
 	int64_t b = r.denominator();
@@ -65,7 +64,9 @@ long floor(Rational r)
 		return -(a + b - 1) / b;
 	}
 }
-long ceil(Rational r)
+
+#if 0
+static long ceil(Rational r)
 {
 	int64_t a = r.numerator();
 	int64_t b = r.denominator();
@@ -82,463 +83,546 @@ long ceil(Rational r)
 		return -a / b;
 	}
 }
-Line::Line(const Rational& px1, const Rational& py1, const Rational& px2,
-		const Rational& py2) :
-	x1(px1), y1(py1), x2(px2), y2(py2)
-{
-
-}
-Line::Line() :
-	x1(0), y1(0), x2(0), y2(0)
-{
-}
-Line::Line(const Vertex& v1, const Vertex& v2) :
-	x1(v1.x * 2 + 1, 2), y1(v1.y * 2 + 1, 2), x2(v2.x * 2 + 1, 2), y2(v2.y * 2
-			+ 1, 2)
-{
-}
-Line::Line(int x1a, int x1b, int y1a, int y1b, int x2a, int x2b, int y2a,
-		int y2b) :
-	x1(x1a, x1b), y1(y1a, y1b), x2(x2a, x2b), y2(y2a, y2b)
-{
-
-}
-
-Vertex Line::v1() const
-{
-	return Vertex(floor(x1), floor(y1));
-}
-Vertex Line::v2() const
-{
-	return Vertex(floor(x2), floor(y2));
-}
-Rational Line::get_x1() const
-{
-	return x1;
-}
-Rational Line::get_y1() const
-{
-	return y1;
-}
-Rational Line::get_x2() const
-{
-	return x2;
-}
-Rational Line::get_y2() const
-{
-	return y2;
-}
-Line Line::reversed() const
-{
-	return Line(x2, y2, x1, y1);
-}
-
-int Line::get_smallest_p_of_x(int x) const
-{
-	if (x < x1 || x > x2)
-		throw std::runtime_error("x out of range");
-	if (x1 == x2)
-	{
-		if (x == floor(x1))
-			return 0;
-		else
-			throw std::runtime_error("x out of range (2)");
-	}
-	if (x2 < x1)
-		throw std::runtime_error(
-				"get_smallest_p_of_x only supports lines with x2>=x1");
-	Rational delta_x = x2 - x1;
-	Rational delta_y = y2 - y1;
-	Rational rx = x - x1;
-	if (delta_x > delta_y)
-	{
-		return floor(rx);
-	}
-	else
-	{
-		Rational ik = delta_x / delta_y;
-		Rational steps = rx / ik;
-		return ceil(steps);
-	}
-
-}
-
-Vertex Line::get_impl(const Line& pself, int p)
-{
-	FirstOctant oct(pself);
-	Line self = oct.transform_line(pself);
-	int tlen = self.grid_maxnorm(oct);
-	//printf("Untransfrm. line: %s\n",pself.__repr__().c_str());
-	//printf("Transformed line: %s\n",self.__repr__().c_str());
-	if (p == 0)
-		return oct.untransform_vertex(Vertex(oct.floor_x(self.x1), oct.floor_y(
-				self.y1)));
-	if (p == tlen)
-		return oct.untransform_vertex(Vertex(oct.floor_x(self.x2), oct.floor_y(
-				self.y2)));
-	Rational delta_x = self.x2 - self.x1;
-	Rational delta_y = self.y2 - self.y1;
-	//std::cout<<"deltas: "<<delta_x<<","<<delta_y<<std::endl;
-	assert(delta_x > 0 && delta_y >= 0 && delta_y <= delta_x);
-	Rational k = delta_y / delta_x;
-	int base_x = floor(self.x1)+1;
-	Rational rel_x = (base_x-self.x1)+(p-1)+Rational(1,2);
-			//Rational(p - 1) + self.x1 - Rational(base_x) + Rational(1,
-			//2);
-	//printf("base_x = %d, p=%d, rel_x=%f, k: %f\n",base_x,p,rel_x.numerator()/(float)rel_x.denominator(),
-	//		k.numerator()/float(k.denominator()));
-	Rational yexact = self.y1 + rel_x * k;
-	int y = oct.floor_y(yexact);
-	//printf("yexact: %f\n",yexact.numerator()/float(yexact.denominator()));
-	int x = oct.floor_x(self.x1 + rel_x);
-	return oct.untransform_vertex(Vertex(x, y));
-}
-
-std::set<int> setunion(const std::set<int>& a, const std::set<int>& b)
-{
-	std::set<int> res;
-	std::insert_iterator<std::set<int> > backii(res, res.end());
-	std::set_union(a.begin(), a.end(), b.begin(), b.end(), backii);
-	return res;
-}
-bool Line::pinch2(const Vertex& po, Line& oa, Line& ob,const FirstOctant& base)
-{
-
-	std::cout << "Pinching " << floatrepr() << " at " << po.__repr__()<< "\n";
-	FirstOctant oct(*this,base);
-	std::cout<<"Oct:"<<oct.__repr__()<<"\n";
-	Line self = oct.transform_line(*this);
-	Vertex o = oct.transform_vertex(po);
-	std::cout << "Oct transformed Pinching " << self.floatrepr() << " at " << o.__repr__()<< "\n";
-
-
-	Rational delta_x = self.x2 - self.x1;
-	Rational delta_y = self.y2 - self.y1;
-	printf("x1: %f\n",self.get_x1_inexact());
-	printf("floor self x1: %d\n",oct.floor_x(self.get_x1()));
-	int p = o.x - oct.floor_x(self.get_x1());
-
-	int maxp = self.grid_maxnorm();
-	printf("p: %d, maxp: %d\n", p, maxp);
-	if (p < 0 || p > maxp)
-	{
-		std::cout<<"pinch op failed\n";
-		return false;
-	}
-	if (p == 0)
-	{
-		oa = Line(v1(), v1());
-		oa.add_tags(tags);
-		ob = *this;
-		return true;
-	}
-	if (p == maxp)
-	{
-		oa = *this;
-		ob = Line(v2(), v2());
-		ob.add_tags(tags);
-		return true;
-	}
-	int base_x = floor(self.x1);
-	Rational rel_x = Rational(p - 1) + self.x1 - Rational(base_x) + Rational(1,
-			2);
-	Rational k = delta_y / delta_x;
-	assert(k.denominator() > INT_MIN && k.denominator() < INT_MAX);
-	assert(k.numerator() > INT_MIN && k.numerator() < INT_MAX);
-
-	Rational py = self.y1 + rel_x * k;
-	Rational px = self.x1 + rel_x;
-	//std::cout<<"first half: "<<self.x1<<","<<self.y1<<"--"<<px<<","<<py<<"\n";
-	Line first_half(self.x1, self.y1, px, py);
-	Line second_half(px, py, self.x2, self.y2);
-
-#if 1
-	Rational fh_delta_x = first_half.x2 - first_half.x1;
-	Rational fh_delta_y = first_half.y2 - first_half.y1;
-	Rational fh_k = fh_delta_y / fh_delta_x;
-	assert(fh_k == k);
-	Rational sh_delta_x = second_half.x2 - second_half.x1;
-	Rational sh_delta_y = second_half.y2 - second_half.y1;
-	Rational sh_k = sh_delta_y / sh_delta_x;
-	assert(sh_k == k);
 #endif
 
-	first_half.add_tags(tags);
-	second_half.add_tags(tags);
+Line::Line() :
+		k(0),m(0)
+{
+}
+bool Line::is_on_line(Vertex v)const
+{
+    int y1=0,y2=0;    
+    if (get_yrange(v.x,y1,y2))
+    {
+        assert(y1<=y2);
+        if (v.y>=y1 && v.y<=y2)
+            return true;
+    }
+    return false;
+}
+int Line::side_of_extrapolated_line(Vertex v) const
+{
+    if (v1==v2)
+        throw std::runtime_error("The concept of being to the left or right of a zero-length line doesn't make sense");
+    if (is_vertical())
+    {
+        assert(v1.x==v2.x);
+        if (v1.y<v2.y)
+        { //line goes from low to high
+            if (v.x>v1.x) return +1; //right
+            if (v.x<v1.x) return -1; //left
+            return 0;
+        }
+        else
+        { //line goes from high to low
+            if (v.x>v1.x) return -1; //left
+            if (v.x<v1.x) return +1; //right
+            return 0;
+        }        
+    }
+    else
+    {
+	    assert(!is_vertical());
+	    assert(v1.x!=v2.x);
+	    bool reversed=(v1.x>v2.x);
+	    /*INT_MAX = k * (v.x) + m; => v.x=(INT_MAX-m)/k */
+        double approx_y1p=todouble(k) * v.x + todouble(m);
+        double approx_y2p=todouble(k) * (v.x+1) + todouble(m);
+        double approx_y1=std::min(approx_y1p,approx_y2p);
+        double approx_y2=std::max(approx_y1p,approx_y2p);
+        double epsilon=10;
+        if (v.y>approx_y2+epsilon) 
+        {
+            if (!reversed)
+                return -1;
+            else
+                return +1;
+        }
+        if (v.y<approx_y1-epsilon)
+        {
+            if (!reversed)
+                return +1;
+            else
+                return -1; 
+        }
+            
+	    
+	    Rational ry1=k * v.x + m;
+	    Rational ry2=k * (v.x+1) + m;
+	    int inty1=ratfloor(ry1);
+	    int inty2=ratfloor(ry2);
+	    if (inty1>inty2)
+		    std::swap(inty1,inty2);
+		if (v.y>inty2)
+		{
+		    if (!reversed)
+		        return -1;
+		    else
+		        return +1;
+		}
+		if (v.y<inty1)
+		{
+		    if (!reversed)
+		        return +1;
+		    else
+		        return -1;		    
+		}
+        assert(v.y>=inty1 && v.y<=inty2);
+        return 0;
+    }
 
-	oa = oct.untransform_line(first_half);
-	ob = oct.untransform_line(second_half);
-	//std::cout<<"Pinch result:"<<oa.__repr__()<<"/"<<ob.__repr__()<<"\n";
-	return true;
-}
-int max3(int a, int b, int c)
-{
-	return std::max(std::max(a, b), c);
-}
-int min3(int a, int b, int c)
-{
-	return std::min(std::min(a, b), c);
 }
 
-static void yrange_helper(int x, Rational k, Rational m, int& y1, int& y2,const FirstOctant& oct)
+DbgFloatVertex Line::dbg_point_on_line(Vertex v)const
 {
+	if (v1.x==v2.x)
+	{
+		if (v.x!=v1.x) throw std::runtime_error("Vertex isn't on line");
+		DbgFloatVertex ret;
+		ret.x=v.x+0.5;
+		ret.y=v.y+0.5;
+		return ret;
+	}
 	if (k==0)
 	{
-		y1=oct.floor_y(m);
-		y2=oct.floor_y(m);
-		return;
+		if (v.y!=v1.y) throw std::runtime_error("Vertex isn't on line (2)");
+		DbgFloatVertex ret;
+		ret.x=v.x+0.5;
+		ret.y=v.y+0.5;
+		return ret;
 	}
-	assert(k>=1 || k<=-1);
-	Rational tempy1 = x * k + m; //including
-	Rational tempy2 = (x + 1) * k + m; //excluding
-	/*std::cout<<"x="<<x<<" ty1= "<<tempy1<<"\n";
-	std::cout<<"x="<<x<<" ty2= "<<tempy2<<"\n";*/
 
+	int left=v.x;
+	int right=v.x+1;
+	int down=v.y;
+	int up=v.y+1;
+/*
+ * (1) kx1+m=down => xa=(down-m)/k
+ * (2) kx2+m=up => xb=(up-m)/k
+ * (3) k*left+m=ya
+ * (4) k*right+m=yb
+ */
+	Rational ya=k*left+m;
+	Rational yb=k*right+m;
+	double xa=(down-todouble(m))/todouble(k);
+	double xb=(up-todouble(m))/todouble(k);
+	double xmin=std::min(xa,xb);
+	double xmax=std::max(xa,xb);
+	DbgFloatVertex temp;
+	temp.x=left+0.5;
+	if (temp.x<xmin)
+		temp.x=xmin;
+	if (temp.x>xmax)
+		temp.x=xmax;
+	temp.y=todouble(k)*temp.x+todouble(m);
+	return temp;
+}
 
+Line::Line(const Vertex& pv1, const Vertex& pv2) :
+	v1(pv1),v2(pv2)
+{
+	Rational x1(2*v1.x+1,2);
+	Rational y1(2*v1.y+1,2);
+	Rational x2(2*v2.x+1,2);
+	Rational y2(2*v2.y+1,2);
 
-	if (k>=1)
-	{
-		//including
-		y1 = oct.ceil_y(tempy1 - Rational(oct.get_floorsigny(), 2));
-		//3.4 -> 2.9 -> 3
-		//3.5 -> 3.0 -> 3
-		//3.6 -> 3.1 -> 4
-
-		//excluding
-		y2 = oct.ceil_y(tempy2 - Rational(oct.get_floorsigny(), 2))-1;
-		//3.4 -> 2.9 -> 3 -> 2
-		//3.5 -> 3.0 -> 3 -> 2
-		//3.6 -> 3.1 -> 4 -> 3
-	}
+	if (x2!=x1)
+		k = (y2 - y1) / (x2 - x1);
 	else
+		k = 0;
+	m = y1 - k * x1;
+
+}
+Line::Line(const Vertex& pv1, const Vertex& pv2,
+		const Rational& pk,const Rational& pm) :
+	v1(pv1),v2(pv2),k(pk),m(pm)
+{
+}
+
+Line Line::reversed() const
+{
+	Line l=*this;
+	std::swap(l.v1,l.v2);
+	return l;
+}
+
+bool Line::is_vertical() const
+{
+	if (v1.x==v2.x) return true;
+	return false;
+}
+Rational Line::get_k() const
+{
+	return k;
+}
+Rational Line::get_m() const
+{
+	return m;
+}
+
+
+bool Line::get_yrange(int x,int& inty1,int& inty2) const
+{
+	if (v2.x<v1.x)
 	{
-		//excluding
-		y1 = oct.floor_y(tempy2 - Rational(oct.get_floorsigny(), 2))+1;
-
-		//including
-		y2 = oct.floor_y(tempy1 - Rational(oct.get_floorsigny(), 2));
-
+		Line rev=this->reversed();
+		return rev.get_yrange(x,inty1,inty2);
 	}
-
-	assert(y2>=y1);
-
-}
-double Line::get_x1_inexact() const
-{
-	return x1.numerator()/double(x1.denominator());
-}
-double Line::get_y1_inexact() const
-{
-	return y1.numerator()/double(y1.denominator());
-}
-double Line::get_x2_inexact() const
-{
-	return x2.numerator()/double(x2.denominator());
-}
-double Line::get_y2_inexact() const
-{
-	return y2.numerator()/double(y2.denominator());
-}
-
-void Line::y_range(int x,int& py1,int& py2)
-{
-	if (x<floor(x1) || x>floor(x2))
-		throw std::runtime_error("x out of range");
-	if (floor(get_x2())==floor(get_x1()))
+	//printf("get_yrange(%d) lim: [%d,%d]\n",x,v1.x,v2.x);
+	if (x<v1.x || x>v2.x)
+		return false;
+	if (v1.x==v2.x)
 	{
-		py1=floor(y1);
-		py2=floor(y2);
-		return;
-	}
-	Rational k = (get_y2() - get_y1()) / (get_x2() - get_x1());
-	Rational m = get_y1() - k * get_x1();
-	yrange_helper(x,k,m,py1,py2,Line(Vertex(0,0),Vertex(1,1)));
-	if (py1<floor(y1))
-		py1=floor(y1);
-	if (py1>floor(y2))
-		py1=floor(y2);
-
-	if (py2<floor(y1))
-		py2=floor(y1);
-	if (py2>floor(y2))
-		py2=floor(y2);
-}
-
-bool Line::intersect_impl(const Line& pa, const Line& pb, Line& inter,
-		std::vector<Line>& out)
-{
-	FirstOctant oct(pa);
-	printf("intersect_impl: Octant state: %s\n",oct.__repr__().c_str());
-	Line a = oct.transform_line(pa);
-	Line b = oct.transform_line(pb);
-	if (b.get_x1() > b.get_x2())
-	{
-		b = b.reversed();
-	}
-	assert(a.get_x1()<=a.get_x2());
-	assert(b.get_x1()<=b.get_x2());
-	if (oct.floor_x(b.get_x1()) == oct.floor_x(b.get_x2()))
-	{
-		printf("x1==x2\n\n------------------------\n\n");
-		int bx = oct.floor_x(b.get_x1());
-		if (bx < oct.floor_x(a.get_x1()) || bx > oct.floor_x(a.get_x2()))
-			return false;
-		int a_p = bx - oct.floor_x(a.get_x1());
-		//std::cout << "a:" << a.__repr__() << "\n";
-		Vertex a_v = a.get(a_p);
-		//std::cout << "a_v:" << a_v.__repr__() << "\n";
-		//printf("bx: %d\n",bx);
-		assert(a_v.get_x() == bx);
-		int ay = a_v.get_y();
-		if (ay < std::min(oct.floor_y(b.get_y1()), oct.floor_y(b.get_y2())) ||
-				ay > std::max(oct.floor_y(b.get_y1()),oct.floor_y(b.get_y2())))
-			return false;
-		//std::cout << "Pinching a and b at " << a_v.__repr__() << "\n";
-		Line l1, l2, l3, l4;
-		printf("Pinching A\n");
-		if (!a.pinch2(a_v, l1, l2, oct))
-			return false;
-		printf("Pinching B\n");
-		if (!b.pinch2(a_v, l3, l4, oct))
-			return false;
-		inter = oct.untransform_line(Line(a_v, a_v));
-		inter.add_tags(a.get_tags());
-		inter.add_tags(b.get_tags());
-		out.push_back(oct.untransform_line(l1));
-		out.push_back(oct.untransform_line(l2));
-		out.push_back(oct.untransform_line(l3));
-		out.push_back(oct.untransform_line(l4));
-		return true;
-	}
-	printf("x1!=x2\n\n------------------------\n");
-	Rational kA=0;
-	Rational kB=0;
-	//for(int i=0;i<2;++i)
-	{
-		kA = (a.get_y2() - a.get_y1()) / (a.get_x2() - a.get_x1());
-		kB = (b.get_y2() - b.get_y1()) / (b.get_x2() - b.get_x1());
-		/*assert(kA<=1);
-		if (kA<=kB)
-			break;
-		Line temp=a;
-		a=b;
-		b=temp;*/
-
-	}
-
-	Rational mA = a.get_y1() - kA * a.get_x1();
-	Rational mB = b.get_y1() - kB * b.get_x1();
-	/*std::cout << "a:" << a.__repr__() << "\n";
-	std::cout << "b:" << b.__repr__() << "\n";*/
-	int x1 = (kA==kB) ? std::max(oct.floor_x(a.get_x1()), oct.floor_x(b.get_x1()))
-			:max3(	oct.floor_x(a.get_x1()), oct.floor_x(b.get_x1()),
-
-				std::min(
-					oct.floor_x((mA - mB - 1) / (kB - kA)),
-					oct.floor_x((mA - mB + 1) / (kB - kA)) + 1
-					)-1 //FULFIX!
-			);
-
-	int x2 =  (kA==kB) ? std::min(oct.floor_x(a.get_x2()), oct.floor_x(b.get_x2()))
-			:min3(	oct.floor_x(a.get_x2()), oct.floor_x(b.get_x2()),
-
-				std::max(
-					oct.floor_x((mA - mB + 1) / (kB - kA)) + 1,
-					oct.floor_x((mA - mB - 1) / (kB - kA))
-					)+1 //FULFIX!
-			);
-
-
-	printf("From %d -> %d\n", x1, x2);
-	printf("Line a: %s\n",a.floatrepr().c_str());
-	printf("Line b: %s\n",b.floatrepr().c_str());
-	Line first_a, first_b;
-	Line rest_a, rest_b;
-	Line last_a, last_b;
-	Line middle_a, middle_b;
-
-	for (int iter = 0; iter < 2; ++iter)
-	{
-		Vertex found_vertex;
-		bool found = false;
-		printf("Number of it: %d\n",x2-x1);
-		for (int i = 0; i <= x2 - x1; ++i)
+		if (v1.x==x)
 		{
-
-///#error To do: Adapt line drawer to draw lines and gridded lines to visualize problems.
-			int x = 0;
-			if (iter == 0)
-				x = x1 + i;
-			else
-				x = x2 - i;
-			Rational rx(2 * x + oct.get_floorsignx(), 2);
-			int yA = oct.floor_y(kA * rx + mA);
-			printf("Looking for intersection at x=%d, yA=%d\n",x,yA);
-			if ((x == oct.floor_x(b.get_x1()) && yA == oct.floor_y(b.get_y1())) ||
-					(x == oct.floor_x(b.get_x2()) && yA == oct.floor_y(b.get_y2())))
-			{
-				printf("Found endpoint match: %d,%d\n",x,yA);
-				found_vertex = Vertex(x, yA);
-				found = true;
-				break;
-			}
-
-			if (kB > 1 || kB<-1)
-			{
-
-				int yb1 = 0, yb2 = 0;
-				yrange_helper(x, kB, mB, yb1, yb2, oct);
-				printf("yB1: %d, yB2: %d\n",yb1,yb2);
-				std::cout<<"yrange_helper output for "<<x<<": "<<yb1<<","<<yb2<<"\n";
-				if (yA >= yb1 && yA <= yb2)
-				{
-					found_vertex = Vertex(x, yA);
-					found = true;
-					break;
-				}
-			}
-			else
-			{
-				int yB=oct.floor_y(kB * rx + mB);
-				printf("x: %d, yB:%d\n",x,yB);
-				printf("x1: %d, x2: %d,yB(x-1):%d\n",
-						x1,x2,
-						oct.floor_y(kB * (rx-1) + mB));
-
-				if (yA == yB)
-				{
-					found_vertex = Vertex(x, yA);
-					found = true;
-					break;
-				}
-			}
-		}
-		if (found == false)
-			return false; //no intersection.
-		if (iter == 0)
-		{
-			if (!a.pinch2(found_vertex, first_a, rest_a, oct))
-				return false;
-			if (!b.pinch2(found_vertex, first_b, rest_b, oct))
-				return false;
+			inty1=std::min(v1.y,v2.y);
+			inty2=std::max(v1.y,v2.y);
+			return true;
 		}
 		else
 		{
-			if (!rest_a.pinch2(found_vertex, middle_a, last_a, oct))
-				return false;
-			if (!rest_b.pinch2(found_vertex, middle_b, last_b, oct))
-				return false;
+			return false;
 		}
 	}
-	out.push_back(oct.untransform_line(first_a));
-	out.push_back(oct.untransform_line(first_b));
-	middle_a.add_tags(middle_b.tags);
-	//out.push_back(oct.untransform_line(middle_a));
-	inter = oct.untransform_line(middle_a);
-	out.push_back(oct.untransform_line(last_a));
-	out.push_back(oct.untransform_line(last_b));
+	assert(!is_vertical());
+	Rational ry1=k * x + m;
+	Rational ry2=k * (x+1) + m;
+	//printf("ry1: %f, ry2: %f\n",todouble(ry1),todouble(ry2));
+	inty1=ratfloor(ry1);
+	inty2=ratfloor(ry2);
+	/*if (k>0)
+	{
+		if (ry1==inty1)
+			--inty1;
+	}
+	if (k<0)
+	{
+		if (ry2==inty2)
+			--inty2;
+	}*/
 
+	int ylimlo=std::min(v1.y,v2.y);
+	int ylimhi=std::max(v1.y,v2.y);
+	//printf("Ylim hi/lo: %d/%d\n",ylimlo,ylimhi);
+
+	if (inty1<ylimlo)
+		inty1=ylimlo;
+	if (inty1>ylimhi)
+		inty1=ylimhi;
+	if (inty2<ylimlo)
+		inty2=ylimlo;
+	if (inty2>ylimhi)
+		inty2=ylimhi;
+	if (inty1>inty2)
+		std::swap(inty1,inty2);
+	assert(inty1<=inty2);
 	return true;
 }
+
+std::vector<Vertex> Line::slow_all_vertices() const
+{
+	//printf("Get all vertices\n");
+	int x=std::min(v1.x,v2.x);
+	int xend=std::max(v1.x,v2.x);
+	std::vector<Vertex> ret;
+	for(;x<=xend;++x)
+	{
+		int y1=0,y2=0;
+
+		if (!get_yrange(x,y1,y2))
+			throw std::runtime_error("Unexpected error in slow_all_vertices");
+		assert(y1<=y2);
+		//printf("get yrange: %d: %d-%d\n",x,y1,y2);
+		for(int y=y1;y<=y2;++y)
+			ret.push_back(Vertex(x,y));
+	}
+	return ret;
+}
+std::vector<Vertex> Line::intersection_points(const Line& o) const
+{
+	//printf("New intersect------------------------\n");
+	//printf("a: %s, b: %s\n",__repr__().c_str(),o.__repr__().c_str());
+	const Rational kA = k;
+	const Rational mA = m;
+	const Rational kB = o.k;
+	const Rational mB = o.m;
+
+	const int minx=std::max(std::min((v1.x),(v2.x)),
+					  std::min((o.v1.x),(o.v2.x)));
+	const int maxx=std::min(std::max((v1.x),(v2.x)),
+					  std::max((o.v1.x),(o.v2.x)));
+	//printf("minx: %d, maxx: %d\n",minx,maxx);
+	if (minx>maxx)
+		return std::vector<Vertex>(); //no intersection
+	int ix1=0,ix2=0;
+
+	if (kA==kB && is_vertical()==o.is_vertical())
+	{
+	    //printf("Lines are parallell %d %d\n",int(is_vertical()),int(o.is_vertical()));
+		//printf("kA==kB\n");
+		if (absolute(mA-mB)>1)
+		{
+			//printf("Parallel lines too far apart\n");
+			return std::vector<Vertex>(); //no intersection
+		}
+		ix1=minx;
+		ix2=maxx;
+	}
+	else if (v1.x==v2.x || o.v1.x==o.v2.x)
+	{ //one of the lines is vertical
+		ix1=minx;
+		ix2=maxx;
+		//printf("One of the lines is vertical\n");
+	}
+	else
+	{
+		assert(is_vertical()==false && o.is_vertical()==false);
+		double dmA=todouble(mA);
+		double dmB=todouble(mB);
+		double dkA=todouble(kA);
+		double dkB=todouble(kB);
+		double ydiff=1.0+std::max(fabs(dkA),fabs(dkB));
+		double fxa=(dmA - dmB - ydiff) / (dkB - dkA);
+		double fxb=(dmA - dmB + ydiff) / (dkB - dkA);
+		double size=fabs(dmA)+fabs(dmB)+fabs(dkA)+fabs(dkB);
+		double fx1=std::min(fxa,fxb)-(1e-7)*size;
+		double fx2=std::max(fxa,fxb)+(1e-7)*size;
+		//printf("Ideal x intersect limits: %f %f\n",fx1,fx2);
+		ix1=floor(fx1);
+		ix2=floor(fx2);
+		//printf("Minx/Maxx: %d %d\n",minx,maxx);
+		//printf("Integer x intersect limits: %d %d\n",ix1,ix2);
+		if (ix1<minx) ix1=minx;
+		if (ix1>maxx) ix1=maxx;
+		if (ix2<minx) ix2=minx;
+		if (ix2>maxx) ix2=maxx;
+	}
+	int slopeA=0,slopeB=0;
+	if (v1.y<v2.y) slopeA=1;
+	if (v1.y>v2.y) slopeA=-1;
+	if (v2.x<v1.x) slopeA*=-1;
+	if (o.v1.y<o.v2.y) slopeB=1;
+	if (o.v1.y>o.v2.y) slopeB=-1;
+	if (o.v2.x<o.v1.x) slopeB*=-1;
+
+	//printf("ix1: %d, ix2: %d, slopeA: %d, slopeB: %d\n",ix1,ix2,slopeA,slopeB);
+	assert(ix2>=ix1);
+	Vertex v[2];
+	for(int iter=0;iter<2;++iter)
+	{
+		bool found=false;
+		for(int i=0;i<=ix2-ix1;++i)
+		{
+			int x=0;
+			if (iter==0)
+				x=ix1+i;
+			else
+				x=ix2-i;
+			int ya1=0,yb1=0,ya2=0,yb2=0;
+			if (!get_yrange(x,ya1,ya2))
+				throw std::runtime_error("Unexpected error line.cpp #1");
+			if (!o.get_yrange(x,yb1,yb2))
+				throw std::runtime_error("Unexpected error line.cpp #2");
+			//printf("%d: yA: %d-%d, yB: %d-%d\n",x,ya1,ya2,yb1,yb2);
+			assert(yb2>=yb1);
+			assert(ya2>=ya1);
+			if (yb1<=ya2 && yb2>=ya1)
+			{ //overlaps
+				int yhi=std::min(yb2,ya2);
+				int ylo=std::max(yb1,ya1);
+				//printf("yhi: %d, ilo: %d\n",yhi,ylo);
+				if (slopeA>0)
+				{
+					if (iter==0)
+						v[iter]=Vertex(x,ylo);
+					else
+						v[iter]=Vertex(x,yhi);
+
+				}
+				else
+				if (slopeA<0)
+				{
+					if (iter==0)
+						v[iter]=Vertex(x,yhi);
+					else
+						v[iter]=Vertex(x,ylo);
+				}
+				else
+				{
+					assert(yhi==ylo);
+					v[iter]=Vertex(x,yhi);
+				}
+				found=true;
+				break;
+			}
+		}
+		if (!found)
+		{
+			//printf("No intersection found\n");
+			return  std::vector<Vertex>(); //no intersection
+		}
+	}
+	/*printf("!! The found vertices: %s %s\n",
+			v[0].__repr__().c_str(),
+			v[1].__repr__().c_str());*/
+	std::vector<Vertex> ip;
+	ip.push_back(v[0]);
+	ip.push_back(v[1]);
+	return ip;
+}
+std::vector<Line> Line::intersect(const Line& o) const
+{
+	std::vector<Vertex> v=intersection_points(o);
+	if (v.size()==0)
+		return std::vector<Line>();
+	const Line& la=*this;
+	const Line& lb=o;
+
+	int a_p0=la.v1.taxidist(v[0]);
+	int a_p1=la.v1.taxidist(v[1]);
+	int b_p0=lb.v1.taxidist(v[0]);
+	int b_p1=lb.v1.taxidist(v[1]);
+
+	bool a_rev=a_p1<a_p0;
+	bool b_rev=b_p1<b_p0;
+
+	Line la_begin,lb_begin;
+	Line la_middle,lb_middle;
+	Line la_end,lb_end;
+	la.split3(
+			a_rev ? v[1] : v[0],
+			a_rev ? v[0] : v[1],
+			la_begin,la_middle,la_end);
+	/*printf("Did split la %s into %s and %s and %s\n",
+			la.__repr__().c_str(),
+			la_begin.__repr__().c_str(),
+			la_middle.__repr__().c_str(),
+			la_end.__repr__().c_str()
+			);*/
+	lb.split3(
+			b_rev ? v[1] : v[0],
+			b_rev ? v[0] : v[1],
+			lb_begin,lb_middle,lb_end);
+	/*printf("Did split lb %s into %s and %s and %s\n",
+			lb.__repr__().c_str(),
+			lb_begin.__repr__().c_str(),
+			lb_middle.__repr__().c_str(),
+			lb_end.__repr__().c_str()
+			);*/
+
+	std::vector<Line> out;
+	out.push_back(la_middle);
+	out.push_back(la_begin);
+	out.push_back(lb_begin);
+	out.push_back(la_end);
+	out.push_back(lb_end);
+	return out;
+}
+void Line::split(const Vertex& x,Line& a,Line& b) const
+{
+	/*printf("Splitting line %s at %s\n",
+			__repr__().c_str(),
+			x.__repr__().c_str());*/
+	int y1=0,y2=0;
+	bool ret=get_yrange(x.x,y1,y2);
+	//printf("Yrange at x=%d: %d-%d\n",x.x,y1,y2);
+	if (!ret)
+		throw std::runtime_error("Vertex to split on must be part of line.");
+	assert(ret);
+	assert(y1<=y2);
+	assert(x.y>=y1 && x.y<=y2);
+	a=*this;
+	a.v2=x;
+	b=*this;
+	b.v1=x;
+}
+void Line::split3(const Vertex& x,const Vertex& y,Line& a,Line& b,Line& c) const
+{
+	/*printf("Splitting line %s at %s and %s\n",
+			__repr__().c_str(),
+			x.__repr__().c_str(),
+			y.__repr__().c_str()
+			);*/
+	int begin_y1=0,begin_y2=0;
+	bool begin_ret=get_yrange(x.x,begin_y1,begin_y2);
+	//printf("Yrange at x=%d: %d-%d\n",x.x,begin_y1,begin_y2);
+	int end_y1=0,end_y2=0;
+	bool end_ret=get_yrange(y.x,end_y1,end_y2);
+	//printf("Yrange at x=%d: %d-%d\n",y.x,end_y1,end_y2);
+	if (!begin_ret || !end_ret)
+		throw std::runtime_error("Vertices to split line on, must be a part of line!");
+	assert(begin_ret);
+	assert(begin_y1<=begin_y2);
+	assert(end_ret);
+	assert(end_y1<=end_y2);
+	assert(x.y>=begin_y1 && x.y<=begin_y2);
+	assert(y.y>=end_y1 && y.y<=end_y2);
+	a=*this;
+	a.v2=x;
+	b=*this;
+	b.v1=x;
+	b.v2=y;
+	c=*this;
+	c.v1=y;
+}
+
+std::vector<Line> Line::intersect2(const Line& o) const
+{
+	std::vector<Line> unf=intersect(o);
+	std::vector<Line> ret;
+	if (unf.size()==0)
+		return ret;
+	assert(unf.size()==5);
+	if (unf[0].taxilen()==0) //middle is zero-size
+	{
+		if ((unf[1].taxilen()==0 || unf[3].taxilen()==0) &&
+			(unf[2].taxilen()==0 || unf[4].taxilen()==0))
+			return ret;
+	}
+
+	ret.push_back(unf[0]);
+	for(int i=1;i<(int)unf.size();++i)
+	{
+		const Line& l=unf[i];
+		if (l.taxilen()!=0)
+			ret.push_back(l);
+	}
+	return ret;
+}
+double Line::approx_dist(Vertex p)
+{
+    Vertex c=approx_closest(p);
+    double dx=((double)c.x-p.x);
+    double dy=((double)c.y-p.y);
+    double dist=sqrt(dx*dx+dy*dy);
+    return dist;
+}
+
+Vertex Line::approx_closest(Vertex p)
+{
+	Vertex a=get_v1();
+	Vertex b=get_v2();
+
+	Vector backrel = p-b;
+	Vector frontrel = p-a;
+	Vector dir = b-a;
+	if (frontrel.scalarprod(dir) <= 0) {
+		return a;
+	}
+	if (backrel.scalarprod(dir) >= 0) {
+		return b;
+	}
+	double dirlen=sqrt(dir.x*(double)dir.x+dir.y*(double)dir.y);
+	printf("Dirlen: %f\n",dirlen);fflush(stdout);
+	double dir2x=dir.x/dirlen;
+	double dir2y=dir.y/dirlen;
+	double along = dir2x*frontrel.x+dir2y*frontrel.y;
+	double resx=a.x+dir2x*along;
+	double resy=a.y+dir2y*along;
+	return Vertex((int)(resx+0.5),(int)(resy+0.5));
+}
+
+
+
 
 }
