@@ -84,7 +84,7 @@ struct Cell
 	 */
 	bool is_enveloping()const;
 
-	int get_merged_poly(){return merged_poly;}
+	int get_merged_poly()const{return merged_poly;}
 	Vertex get_leftmost();
 	std::vector<Edge> dbg_get_edges();
 	std::vector<std::string> get_shapes();

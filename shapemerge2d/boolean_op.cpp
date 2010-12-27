@@ -1023,7 +1023,7 @@ void BooleanOp::step9_calc_result()
 		poly.merge_straight_sections();
 		res_polys.push_back(poly);
 	}
-	if (result!=NULL) delete result;
+	delete result;result=NULL;
 	result=new Shape("mergeresult",res_polys);
 
 }

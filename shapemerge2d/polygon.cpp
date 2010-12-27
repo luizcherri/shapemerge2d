@@ -106,11 +106,6 @@ float Polygon::calc_area() const
     double sum=0;
 	BOOST_FOREACH(const Line& l,lines)
 	{
-	    bool up=false;
-	    if (l.get_y1_inexact()<l.get_y2_inexact())
-	    {
-	        up=true;
-	    }
 	    double contrib=
 	        (l.get_y2_inexact()-l.get_y1_inexact())*
 	        0.5*(l.get_x2_inexact()+l.get_x1_inexact());
@@ -266,10 +261,10 @@ struct Event
     	}
     	return "Undefined";
     }
-    bool is_enter(){return kind==EARLY_ENTER_EVENT ||
+    bool is_enter()const{return kind==EARLY_ENTER_EVENT ||
 						   kind==LATE_ENTER_EVENT ||
 						   kind==EDGE_ENTER_EVENT;}
-    bool is_exit(){return kind==EARLY_EXIT_EVENT ||
+    bool is_exit()const{return kind==EARLY_EXIT_EVENT ||
 						  kind==LATE_EXIT_EVENT ||
 						  kind==EDGE_EXIT_EVENT;}
     int val() const
