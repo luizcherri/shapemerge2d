@@ -44,8 +44,9 @@ class Line
 	///Line offset, line pixels are described by y=k*x+m
 	Rational m;
 	///Lines can be given integer "tags" which are stored with the lines.
-	///THese can be used by algorithms.
+	///These can be used by algorithms.
 	std::set<int> tags;
+	long reserved;
 public:
 	Vertex get_v1()const{return v1;}
 	Vertex get_v2()const{return v2;}

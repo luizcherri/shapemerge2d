@@ -28,7 +28,14 @@ namespace shapemerge2d
 	class Shape
 	{
 	public:
+		/**
+		 * Default constructor. Creates an empty Shape.
+		 */
+		Shape();
 		Shape(const Shape&);
+#ifndef SWIG
+		Shape& operator=(const Shape&);
+#endif
 		/**
 		 * Create a shape consisting of the given polygons.
 		 * The name can be anything, and is mostly usable for debugging.
@@ -91,6 +98,8 @@ namespace shapemerge2d
 	private:
 		std::string name;
 		std::vector<Polygon> polys;
+		long reserved1;
+		long reserved2;
 	};
 }
 #ifndef SWIG

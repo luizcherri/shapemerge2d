@@ -13,11 +13,23 @@ std::string Shape::__repr__()const
 	s<<"Shape(\""<<name<<"\", "<<polys.size()<< " polygons)";
 	return s.str();
 }
+Shape& Shape::operator=(const Shape& o)
+{
+	name=o.name;
+	polys=o.polys;
+	BOOST_FOREACH(Polygon& po,polys)
+		po.set_shape(this);
+}
 Shape::Shape(const Shape& o) : name(o.name),polys(o.polys)
 {
 	BOOST_FOREACH(Polygon& po,polys)
 		po.set_shape(this);
 }
+Shape::Shape()
+{
+
+}
+
 std::string Shape::dump() const
 {
 	std::ostringstream s;

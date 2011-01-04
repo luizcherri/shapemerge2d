@@ -271,7 +271,7 @@ public:
     /**
      * Just returned the computed result
      */
-	Shape* step11_get_result();
+	Shape step11_get_result();
 
 public:
 	//Shape addition();
@@ -292,7 +292,7 @@ private:
 	std::map<Vertex,std::set<Edge*> > edgemap;
 	std::vector<Cell*> cells;
 	int num_merged_polys;
-	Shape* result;
+	Shape result;
 	/**
 	 * Create a new Cell, and mark the 'side' side of the given edge as belonging
 	 * to the new Cell.

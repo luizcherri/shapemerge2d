@@ -203,6 +203,7 @@ namespace shapemerge2d
 		const Shape* shape;
 		int64_t doublearea;
 		std::vector<Line> lines;
+		long reserved;
 
 	};
 

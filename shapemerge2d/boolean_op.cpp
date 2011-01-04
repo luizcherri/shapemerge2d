@@ -5,7 +5,6 @@ namespace shapemerge2d
 {
 BooleanOp::BooleanOp()
 {
-	result=NULL;
 	num_merged_polys=0;
 	shape_a=shape_b=0;
 }
@@ -309,7 +308,7 @@ Vertex Cell::get_leftmost()
 	return leftmost;
 }
 
-Shape* BooleanOp::step11_get_result()
+Shape BooleanOp::step11_get_result()
 {
 	return result;
 }
@@ -1023,8 +1022,7 @@ void BooleanOp::step9_calc_result()
 		poly.merge_straight_sections();
 		res_polys.push_back(poly);
 	}
-	delete result;result=NULL;
-	result=new Shape("mergeresult",res_polys);
+	result=Shape("mergeresult",res_polys);
 
 }
 

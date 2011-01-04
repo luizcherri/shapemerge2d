@@ -20,7 +20,7 @@ Shape shape_union(const Shape& shape_ca,const Shape& shape_cb)
     bo.step7_classify_cells(&strat);
     bo.step8_merge_cells();
     bo.step9_calc_result();
-    Shape ret=*bo.step11_get_result();
+    Shape ret=bo.step11_get_result();
     return ret;
 }
 Shape shape_union(const Polygon& a,const Polygon& b)
