@@ -407,9 +407,10 @@ void BooleanOp::step6_determine_cell_cover()
 		}
 
 
+		/*
 		if (curpolys.empty())
 			curcell->classification=VOID; //this is the void, no polygon covers it.
-
+*/
 		recurse_determine_cover(curcell,curpolys,visited_cells);
 	}
 }
@@ -623,14 +624,8 @@ void BooleanOp::step7_classify_cells(BooleanOpStrategy* strat)
 	{
 		if (cell==NULL)
 			throw std::runtime_error("Unexpected error - cell was NULL in classifier");
-		if (cell->classification!=VOID)
-		{
-			assert(cell->classification==UNCLASSIFIED);
-			if (cell->cover.empty())
-				cell->classification=VOID;
-			else
-				cell->classification=strat->evaluate(*cell);
-		}
+		assert(cell->classification==UNCLASSIFIED);
+		cell->classification=strat->evaluate(*cell);
 	}
 }
 void BooleanOrStrategy::init(Shape* a,Shape* b)
@@ -640,7 +635,8 @@ void BooleanOrStrategy::init(Shape* a,Shape* b)
 }
 BooleanUpResult BooleanOrStrategy::evaluate(const Cell& cell)
 {
-
+	if (cell.cover.empty())
+		return VOID;
 	const Polygon* smallest_a=NULL;
 	const Polygon* smallest_b=NULL;
 	uint64_t smallest_a_area=(uint64_t)-1;
