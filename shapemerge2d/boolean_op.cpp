@@ -365,8 +365,8 @@ void BooleanOp::step6_determine_cell_cover()
 					leftmost=l;
 			}
 		}
-		if (!have_leftmost) break; //we're done, we've marked the cover of all cells
-		std::set<Edge*>& edges=edgemap[leftmost];
+		if (!have_leftmost) break; //we're done, we've marked the cover of all cells; no more unprocessed leftmosts
+		const std::set<Edge*>& edges=edgemap[leftmost];
 		assert(edges.size()>0);
 		const Edge* startedge=NULL;
 		//Find the most vertical edge at the leftmost vertex.
@@ -391,7 +391,7 @@ void BooleanOp::step6_determine_cell_cover()
 
 		int sid=0;
 		if (leftmost_edge_outer_side(Line(startedge->v1,startedge->v2)))
-			sid=1;
+			sid=1; //0 = left side, 1 = right side
 
 		Cell* curcell=startedge->side[sid];
 		assert(curcell);
@@ -729,7 +729,7 @@ std::string Cell::__repr__() const
 
 void BooleanOp::step5_create_cells()
 {
-	//Now we have net of vertexes and edges,
+	//Now we have a net of vertexes and edges,
 	//with polygon ownership of the edges.
 	//We just need to find out which polygons cover
 	//which cells.
