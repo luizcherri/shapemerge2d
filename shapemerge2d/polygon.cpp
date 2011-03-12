@@ -12,6 +12,15 @@ const std::vector<Line>& Polygon::get_lines() const
 {
 	return lines;
 }
+std::vector<Vertex> Polygon::get_vertices()const
+{
+	std::vector<Vertex> vertices;
+	BOOST_FOREACH(const Line& line,lines)
+	{
+		vertices.push_back(line.get_v1());
+	}
+	return vertices;
+}
 bool Polygon::is_ccw()const
 {
 	double turnsum=0;
@@ -35,10 +44,8 @@ bool Polygon::is_ccw()const
 			turn+=2*M_PI;
 		if (turn>M_PI)
 			turn-=2*M_PI;
-		//printf("Turn: %f\n",turn);
 		turnsum+=turn;
 	}
-	//printf("Turnsum: %f\n",turnsum);
 	return turnsum>0;
 }
 
@@ -48,10 +55,24 @@ std::string Polygon::__repr__() const
 	s<<"Polygon("<<get_kind_str()<<",\n";
 	BOOST_FOREACH(const Line& l,lines)
 	{
-		s<<l.__repr__()<<"\n";
+		s<<l.get_v1().__repr__()<<"\n";
 	}
 	s<<")";
 	return s.str();
+}
+void Polygon::reverse()
+{
+	for(int i=0;i<(int)lines.size()/2;++i)
+	{
+		int a=i;
+		int b=lines.size()-1-i;
+		std::swap(lines[a],lines[b]);
+	}
+	for(int i=0;i<(int)lines.size();++i)
+	{
+		lines[i].reverse();
+	}
+	naive_area_calc();
 }
 void Polygon::merge_straight_sections()
 {
@@ -89,11 +110,12 @@ void Polygon::naive_area_calc()
     doublearea=0;
     BOOST_FOREACH(const Line& l,lines)
     {
-        doublearea+=((l.get_v1().x-l.get_v2().x)*int64_t(l.get_v1().y+l.get_v2().y));
+        doublearea+=((l.get_v1().x-l.get_v2().x)* int64_t(l.get_v1().y+l.get_v2().y));
     }
 }
 int64_t Polygon::naive_double_area() const
 {
+	//printf("Doublearea: %f\n",(double)doublearea);
     return doublearea;
 }
 int64_t  Polygon::naive_area() const
@@ -554,6 +576,35 @@ bool Polygon::operator==(const Polygon& o)const
 		if (equal) return true;
 	}
 	return false;
+}
+
+Polygon::Polygon(const std::vector<Vertex>& vs,Kind pkind,Shape* pshape) :
+	kind(pkind),
+	shape(pshape)
+{
+	if (vs.size()<3) throw std::runtime_error("A polygon must have at least 3 vertices");
+	Vertex last=vs[vs.size()-1];
+	std::vector<Vertex> temp;
+	//std::cout<<"--------------------------\n";
+	for(int i=0;i<(int)vs.size();++i)
+	{
+		if (vs[i]!=last)
+		{
+			//std::cout<<"Adding: "<<vs[i]<<"\n";
+			temp.push_back(vs[i]);
+			last=vs[i];
+		}
+	}
+	if (temp.size()<3) throw std::runtime_error("A polygon must have at least 3 unique vertices");
+	for(int i=0;i<(int)temp.size();++i)
+	{
+		int j=i+1;
+		if (j==(int)temp.size()) j=0;
+
+		lines.push_back(Line(temp[i],temp[j]));
+	}
+
+    naive_area_calc();
 }
 
 

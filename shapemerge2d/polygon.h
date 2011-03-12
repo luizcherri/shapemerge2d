@@ -93,20 +93,10 @@ namespace shapemerge2d
 		/**
 		 *
 		 */
-		Polygon(const std::vector<Vertex>& vs,Kind pkind=SOLID,Shape* pshape=NULL) :
-			kind(pkind),
-			shape(pshape)
-		{
-			if (vs.size()<3) throw std::runtime_error("A polygon must have at least 3 vertices");
-			for(int i=0;i<(int)vs.size();++i)
-			{
-				int j=i+1;
-				if (j==(int)vs.size()) j=0;
-				lines.push_back(Line(vs[i],vs[j]));
-			}
-		    naive_area_calc();
-		}
+		Polygon(const std::vector<Vertex>& vs,Kind pkind=SOLID,Shape* pshape=NULL);
+		void reverse();
 		const std::vector<Line>& get_lines()const;
+		std::vector<Vertex> get_vertices()const;
 		/**
 		 * Return the vertex with the lowest x coordinate, and if several have
 		 * the same, the one with the lowest y coodinate.

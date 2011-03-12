@@ -62,6 +62,10 @@ public:
 	///Reverse line (exchange start-point and end-point)
 	///without changing the set of pixels occupied by the line.
 	Line reversed() const;
+	///Reverse line (exchange start-point and end-point)
+	///without changing the set of pixels occupied by the line.
+	void reverse();
+
 	///Return an approximate measure of the length of the line.
 	///Not useful for algorithms which expect to be 'stable',
 	///but useful for other purposes. The returned value is an

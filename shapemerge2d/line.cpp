@@ -245,6 +245,11 @@ Line Line::reversed() const
 	std::swap(l.v1,l.v2);
 	return l;
 }
+void Line::reverse()
+{
+	std::swap(v1,v2);
+}
+
 
 bool Line::is_vertical() const
 {
