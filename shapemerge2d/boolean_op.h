@@ -309,7 +309,7 @@ private:
 
 	void recurse_determine_cover(Cell* curcell,std::set<const Polygon*> curpolys,std::set<Cell*>& visited);
 
-
+	void remove_edge(const Edge* e);
 
 
 };

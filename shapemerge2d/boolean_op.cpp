@@ -227,26 +227,48 @@ Edge* BooleanOp::get_out_edge_from_in_edge(Vertex v,Edge* curedge,int side_)
 typedef std::pair<Vertex,std::set<Edge*> > p_t;
 void BooleanOp::step4_eliminate_deadends()
 {
-	std::vector<Vertex> v_remove;
-	std::vector<VertexPair> vp_remove;
-	BOOST_FOREACH(const p_t& pair_,edgemap)
+	for(;;)
 	{
-		const Vertex& v=pair_.first;
-		const std::set<Edge*>& edges=pair_.second;
-		if (edges.size()==1)
+		bool no_progress=true;
+		std::vector<const Edge*> edge_remove;
+		BOOST_FOREACH(const auto& pair_,edgemap)
 		{
-			const Edge* edge=*edges.begin();
-			v_remove.push_back(v);
-			vp_remove.push_back(VertexPair(edge->v1,edge->v2));
+			const std::set<Edge*>& edges=pair_.second;
+			if (edges.size()==1)
+			{
+				const Edge* edge=*edges.begin();
+				edge_remove.push_back(edge);
+			}
+		}
+		BOOST_FOREACH(const Edge* e,edge_remove)
+		{
+			remove_edge(e);
+			no_progress=false;
+		}
+		if (no_progress) break;
+	}
+
+}
+void BooleanOp::remove_edge(const Edge* e)
+{
+	Vertex v1=e->v1;
+	Vertex v2=e->v2;
+	Vertex vs[]={v1,v2};
+	BOOST_FOREACH(Vertex v,vs)
+	{
+		auto edgemap_it=edgemap.find(v);
+		assert(edgemap_it!=edgemap.end());
+		std::set<Edge*>& edges=edgemap_it->second;
+		edges.erase(const_cast<Edge*>(e));
+		if (edges.empty())
+		{
+			vertices.erase(v);
+			edgemap.erase(edgemap_it);
 		}
 	}
-	BOOST_FOREACH(Vertex v,v_remove)
-	{
-		vertices.erase(v);
-		edgemap.erase(v);
-	}
-	BOOST_FOREACH(VertexPair vp,vp_remove)
-		pair2edge.erase(vp);
+
+	int cnt=pair2edge.erase(VertexPair(e->v1,e->v2));
+	assert(cnt==1);
 }
 
 /*static Vertex leftmost_vertex_of(const Edge& e)
