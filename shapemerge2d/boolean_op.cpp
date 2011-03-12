@@ -8,9 +8,15 @@ BooleanOp::BooleanOp()
 	num_merged_polys=0;
 	shape_a=shape_b=0;
 }
-static bool leftmost_edge_is_reversed(Line line)
+/**
+ * Determine if leftmost edge outer side (facing away from
+ * the rest), is to left or right.
+ *
+ * false: left
+ * true: right
+ */
+static bool leftmost_edge_outer_side(Line line)
 {
-	bool reversed=false;
 	if (line.get_v1().x<line.get_v2().x)
 	{
 		if (line.get_v1().y<line.get_v2().y)
@@ -18,14 +24,14 @@ static bool leftmost_edge_is_reversed(Line line)
 			//   /2 |
 			//  /   |
 			//1/    |
-			reversed=false;
+			return false;
 		}
 		else
 		{
 			//1\    |
 			//  \   |
 			//   \2 |
-			reversed=true;
+			return true;
 		}
 	}
 	else
@@ -35,17 +41,16 @@ static bool leftmost_edge_is_reversed(Line line)
 			//2\    |
 			//  \   |
 			//   \1 |
-			reversed=false;
+			return false;
 		}
 		else
 		{
 			//   /1 |
 			//  /   |
 			//2/    |
-			reversed=true;
+			return true;
 		}
 	}
-	return reversed;
 }
 bool Cell::is_enveloping() const
 {
@@ -303,7 +308,7 @@ class AreaSorter
     public:
     bool operator()(const Polygon& a,const Polygon& b)const
     {
-        return a.naive_area()<b.naive_area();
+        return std::abs(a.naive_area())<std::abs(b.naive_area());
     }
 };
 
@@ -379,7 +384,7 @@ void BooleanOp::step6_determine_cell_cover()
 		assert(startedge->side[0]!=NULL && startedge->side[1]!=NULL);
 
 		int sid=0;
-		if (leftmost_edge_is_reversed(Line(startedge->v1,startedge->v2)))
+		if (leftmost_edge_outer_side(Line(startedge->v1,startedge->v2)))
 			sid=1;
 
 		Cell* curcell=startedge->side[sid];
@@ -958,7 +963,7 @@ void BooleanOp::step9_calc_result()
 		//Vertex startvertex=curvertex;
 		Vertex curvertex,startvertex;
 		Edge* curedge=leftmost;
-		if (leftmost_edge_is_reversed(Line(leftmost->v1,leftmost->v2)))
+		if (leftmost_edge_outer_side(Line(leftmost->v1,leftmost->v2)))
 		{
 			startvertex=curedge->v1;
 			curvertex=curedge->v1;
