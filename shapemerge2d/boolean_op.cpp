@@ -751,7 +751,7 @@ static void recursively_mark_component(Cell* cell,ComponentInfo& comp,int curcom
 	if (cell->component!=-1)
 		throw std::runtime_error("Unexpected error - encountered cell from incomplete recursive-marking op");
 	cell->component=curcomp;
-	if (comp.leader==NULL || cell->polygon->naive_double_area()>comp.leader->polygon->naive_double_area())
+	if (comp.leader==NULL || std::abs(cell->polygon->naive_double_area())>std::abs(comp.leader->polygon->naive_double_area()))
 	{
 		if (cell->is_enveloping())
 			comp.leader=cell;
@@ -860,8 +860,6 @@ void BooleanOp::step8_merge_cells()
 			//printf("Rerunning through merge front, %d items\n",(int)merge_front.size());
 			BOOST_FOREACH(Cell* mergecell,merge_front)
 			{
-				//printf("Merging %s\n======================\n",
-				//		mergecell->__repr__().c_str());
 				if (mergecell->merged_poly!=-1) continue;
 				mergecell->merged_poly=cur_poly;
 				std::vector<Cell*> neighs;
