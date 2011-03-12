@@ -56,11 +56,15 @@ bool Cell::is_enveloping() const
 {
 	if (polygon->is_ccw())
 	{
+		//If the assertion below fires, the polygon may
+		//contain loops (this is indicative of a bug).
 		assert(polygon->naive_double_area()>=0);
 		return startside==1;
 	}
 	else
 	{
+		//If the assertion below fires, the polygon may
+		//contain loops (this is indicative of a bug).
 		assert(polygon->naive_double_area()<=0);
 		return startside==0;
 	}
@@ -364,8 +368,10 @@ void BooleanOp::step6_determine_cell_cover()
 		if (!have_leftmost) break; //we're done, we've marked the cover of all cells
 		std::set<Edge*>& edges=edgemap[leftmost];
 		assert(edges.size()>0);
-		Edge* startedge=NULL;
-		BOOST_FOREACH(Edge* edge,edges)
+		const Edge* startedge=NULL;
+		//Find the most vertical edge at the leftmost vertex.
+		//This edge must be an outer edge.
+		BOOST_FOREACH(const Edge* edge,edges)
 		{
 			if (startedge==NULL) startedge=edge;
 			if (edge->line_is_vertical)
@@ -407,10 +413,6 @@ void BooleanOp::step6_determine_cell_cover()
 		}
 
 
-		/*
-		if (curpolys.empty())
-			curcell->classification=VOID; //this is the void, no polygon covers it.
-*/
 		recurse_determine_cover(curcell,curpolys,visited_cells);
 	}
 }
@@ -456,8 +458,8 @@ void BooleanOp::step1_add_lines(Shape* shape_a,Shape* shape_b)
 	this->shape_a=shape_a;
 	this->shape_b=shape_b;
 
-	if (shape_a==NULL || shape_b==NULL)
-		throw std::runtime_error("One of the shapes is NULL");
+	if (shape_a==NULL)
+		throw std::runtime_error("Only shape_b may be NULL");
 	BOOST_FOREACH(const Polygon& poly_a,shape_a->get_polys())
 	{
 		tagmap.push_back(&poly_a);
@@ -467,17 +469,24 @@ void BooleanOp::step1_add_lines(Shape* shape_a,Shape* shape_b)
 			all_lines.push_back(line_a);
 		}
 	}
-	BOOST_FOREACH(const Polygon& poly_b,shape_b->get_polys())
+	if (shape_b!=NULL)
 	{
-		tagmap.push_back(&poly_b);
-		BOOST_FOREACH(Line line_b,poly_b.get_lines())
-		{
-			line_b.add_tag(tagmap.size()-1);
-			all_lines.push_back(line_b);
-		}
-	}
-
+	    BOOST_FOREACH(const Polygon& poly_b,shape_b->get_polys())
+	    {
+		    tagmap.push_back(&poly_b);
+		    BOOST_FOREACH(Line line_b,poly_b.get_lines())
+		    {
+			    line_b.add_tag(tagmap.size()-1);
+			    all_lines.push_back(line_b);
+		    }
+	    }
+    }
 }
+void BooleanOp::step1_add_lines(Shape* shape_a)
+{
+    step1_add_lines(shape_a,NULL);
+}
+
 void BooleanOp::step2_intersect_lines()
 {
 
@@ -628,6 +637,17 @@ void BooleanOp::step7_classify_cells(BooleanOpStrategy* strat)
 		cell->classification=strat->evaluate(*cell);
 	}
 }
+void TidyStrategy::init(Shape* a,Shape* b)
+{
+	shape_a=a;
+}
+BooleanUpResult TidyStrategy::evaluate(const Cell& cell)
+{
+	//printf("Evaluating cell: %s\n",cell.__repr__().c_str());
+	if (cell.is_leader)
+		return VOID;
+	return SOLID;
+}
 void BooleanOrStrategy::init(Shape* a,Shape* b)
 {
 	shape_a=a;
@@ -729,7 +749,7 @@ static void recursively_mark_component(Cell* cell,ComponentInfo& comp,int curcom
 {
 	if (cell->component==curcomp) return;
 	if (cell->component!=-1)
-		throw std::runtime_error("Unexpected error - encountered cell from incomlete recursive-marking op");
+		throw std::runtime_error("Unexpected error - encountered cell from incomplete recursive-marking op");
 	cell->component=curcomp;
 	if (comp.leader==NULL || cell->polygon->naive_double_area()>comp.leader->polygon->naive_double_area())
 	{

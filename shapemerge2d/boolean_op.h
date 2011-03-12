@@ -181,6 +181,14 @@ struct BooleanOrStrategy : public BooleanOpStrategy
 	virtual BooleanUpResult evaluate(const Cell& cell);
 
 };
+struct TidyStrategy : public BooleanOpStrategy
+{
+	Shape* shape_a;
+	TidyStrategy(){shape_a=NULL;}
+	virtual void init(Shape* a,Shape* b);
+	virtual BooleanUpResult evaluate(const Cell& cell);
+
+};
 class BooleanOp
 {
 public:
@@ -198,6 +206,18 @@ public:
 	 */
 
 	void step1_add_lines(Shape* shape_a,Shape* shape_b);
+	
+	/**
+	 * Extract all lines from a single shape. The single
+	 * shape may contain overlapping polygons, or polygons
+	 * with loops. These will be cleaned up.
+	 * Note!
+	 * FIXME: This tag-business isn't really used like it should, and
+	 * might be unnecessary! Maybe fix sometime!
+	 */
+
+	void step1_add_lines(Shape* shape_a);
+	
 	/**
 	 * Find all intersections between the lines. This finds
 	 * all vertexes in the graph of Vertexes and Edges that
