@@ -89,7 +89,7 @@ void Polygon::naive_area_calc()
     doublearea=0;
     BOOST_FOREACH(const Line& l,lines)
     {
-        doublearea+=((l.get_v1().x-l.get_v2().x)*(l.get_v1().y+l.get_v2().y));
+        doublearea+=((l.get_v1().x-l.get_v2().x)*int64_t(l.get_v1().y+l.get_v2().y));
     }
 }
 int64_t Polygon::naive_double_area() const
