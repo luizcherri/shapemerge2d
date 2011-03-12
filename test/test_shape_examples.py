@@ -107,6 +107,42 @@ AAAAAAAAAAAAAB
     assert should_output==real_output
 
 
+def test_poly_cleanup():
+    input1=pyshape("leftbox",\
+"""
+     DCC
+     D  CC 
+     D    CCCC    
+     D       C
+AAAAAXBBBBBBBC
+G    E
+G    E
+GFFFFE
+""",mapmulti=dict(X=['A','D']))    
+    #print asciart(input1)
+    #print input1
+    
+    real_output=tidy_up_polygons(input1)
+    real_str=asciart(real_output)
+    facit=\
+"""                   
+      F
+      HF
+      H FF
+      H   FF
+ AEEEEHGGGGGGG
+ A    D
+ A   C
+ BBBBC
+"""
+    print "real:\n",(real_str)
+    print "facit:\n",(facit)
+    print "real: ",repr(real_str.strip())
+    print "facit:",repr(facit.strip())
+    assert real_str.strip()==facit.strip() 
+    
+
+
 def test_verify_shape4():
     input1=pyshape("leftbox",\
 """

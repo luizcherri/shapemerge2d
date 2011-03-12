@@ -66,6 +66,16 @@ namespace shapemerge2d
 	 * @return a union b
 	 */
 	Shape shape_union(const Polygon& a,const Polygon& b);
+	/**
+	* Tidy up a polygon. Any loops are eliminated, and new
+	* polygons are created instead.
+	*/
+	Shape tidy_up_polygon(const Polygon& a);
+	/**
+	* Tidy up all polygons in a shape. Any loops are eliminated, and new
+	* polygons are created instead.
+	*/
+	Shape tidy_up_polygons(const Shape& a);
 
 
 }

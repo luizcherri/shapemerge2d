@@ -1,4 +1,4 @@
-from pyshapemerge2d import Line,Vertex,Vector,BooleanOp,Polygon,vvector,Shape,lvector,BooleanOrStrategy,pvector,shape_union
+from pyshapemerge2d import Line,Vertex,Vector,BooleanOp,Polygon,vvector,Shape,lvector,BooleanOrStrategy,pvector,shape_union,tidy_up_polygons
 
 from visualize import draw_things
 import visualize
@@ -412,7 +412,7 @@ def position_line(s,match):
                 if ypos>max[1]: max[1]=ypos
     return Line(Vertex(min[0],min[1]),Vertex(max[0],max[1]))
 
-def pypoly(data,kind="solid"):
+def pypoly(data,kind="solid",mapmulti=None):
     assert data.count("\t")==0
     xpos=1
     ypos=data.count("\n")
@@ -423,8 +423,13 @@ def pypoly(data,kind="solid"):
             xpos=1
             ypos-=1
         else:
-            if c!=' ':
-                chs.setdefault(c,[]).append((xpos,ypos))
+            if mapmulti:
+                cs=mapmulti.get(c,[c])
+            else:
+                cs=[c]
+            for c in cs:
+                if c!=' ':
+                    chs.setdefault(c,[]).append((xpos,ypos))
             xpos+=1
     lines=[]
     for c,poss in chs.items():
@@ -440,6 +445,7 @@ def pypoly(data,kind="solid"):
                 endpoints.append(Vertex(*pos))
         if len(endpoints)==1:
             endpoints.append(endpoints[0])
+        print len(endpoints)
         assert(len(endpoints)==2)
         lines.append((c,Line(endpoints[0],endpoints[1])))
     lines.sort()
@@ -458,13 +464,13 @@ def pypoly(data,kind="solid"):
         #print "Line: %s:%s"%(n1,outline)
         outv.append(outline.get_v1())
     poly=Polygon(vvector(outv))
-    if not poly.is_ccw():
-        raise Exception("shouldn't be cw")
+    #if not poly.is_ccw():
+    #    raise Exception("shouldn't be cw")
     if kind=="hole":
         poly.set_kind(Polygon.HOLE)
     return poly
     
-def pyshape(name,*datas):
+def pyshape(name,*datas,**kw):
     polys=[]
     for data in datas:
         if isinstance(data,basestring):
@@ -472,7 +478,7 @@ def pyshape(name,*datas):
             polydata=data
         else:
             polydata,kind=data
-        polys.append(pypoly(polydata,kind))
+        polys.append(pypoly(polydata,kind,**kw))
 
     shape=Shape(name,pvector(polys))
     assert shape!=None

@@ -1058,10 +1058,10 @@ void BooleanOp::step9_calc_result()
 		}
 		//printf("Finished generating poly #%ld, outputting it\n",res_polys.size());
 		Polygon poly(output,polykind);
-		if (!poly.is_ccw())
+		/*if (!poly.is_ccw())
 		{
 			throw std::runtime_error("Polygon is not ccw");
-		}
+		}*/
 		poly.merge_straight_sections();
 		res_polys.push_back(poly);
 	}
