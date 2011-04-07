@@ -74,6 +74,32 @@ void Polygon::reverse()
 	}
 	naive_area_calc();
 }
+std::vector<Vertex> Polygon::first_entrance(const Line& argline)
+{
+	std::set<Vertex> cand;
+	BOOST_FOREACH(Line line , lines)
+	{
+		BOOST_FOREACH(Vertex v, line.intersection_points(argline))
+				cand.insert(v);
+	}
+	if (cand.empty()) return std::vector<Vertex>();
+	int best_distance=INT_MAX;
+	Vertex best_cand=*cand.begin();
+	BOOST_FOREACH(Vertex candv,cand)
+	{
+		int dist=candv.taxidist(argline.get_v1());
+		if (dist<=best_distance)
+		{
+			best_distance=dist;
+			best_cand=candv;
+		}
+	}
+	std::vector<Vertex> res;
+	res.push_back(best_cand);
+	return res;
+
+}
+
 void Polygon::merge_straight_sections()
 {
 	if (lines.size()<=1) return;

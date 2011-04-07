@@ -21,6 +21,22 @@ def test_is_ccw():
         Vertex(0,0),Vertex(0,1),Vertex(1,1),Vertex(1,0)]))
     assert not polya.is_ccw()
 
+def test_first_entrance():
+    poly=Polygon(vvector([
+        Vertex(0,0),Vertex(10,0),Vertex(10,10),Vertex(0,10)]))
+    res=list(poly.first_entrance(Line(Vertex(-5,5),Vertex(15,5))))
+    print "res:",res
+    assert res[0]==Vertex(0,5)
+    
+    res=list(poly.first_entrance(Line(Vertex(15,5),Vertex(-5,5))))
+    print "res:",res
+    assert res[0]==Vertex(10,5)
+
+    
+    assert res[0].get_x()==10
+    
+    
+
 def test_merge_straights():
     polya=Polygon(vvector([
         Vertex(0,0),Vertex(5,0),Vertex(10,0),Vertex(10,10),Vertex(0,10)]))

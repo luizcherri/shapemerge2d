@@ -187,6 +187,8 @@ namespace shapemerge2d
          */
         Shape merge(const Polygon& other) const;
 
+        std::vector<Vertex> first_entrance(const Line& line);
+
 	private:
 		void naive_area_calc();
 		Kind kind;

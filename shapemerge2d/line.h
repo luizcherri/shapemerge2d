@@ -123,6 +123,8 @@ public:
 		return v1.__hash__()+17*v2.__hash__();
 	}
 
+
+
 	/**
 	 * Returns abs(v1.x-v2.x)+abs(v1.y-v2.y)
 	 */
