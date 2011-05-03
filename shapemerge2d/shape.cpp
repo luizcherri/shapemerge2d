@@ -19,6 +19,7 @@ Shape& Shape::operator=(const Shape& o)
 	polys=o.polys;
 	BOOST_FOREACH(Polygon& po,polys)
 		po.set_shape(this);
+	return *this;
 }
 Shape::Shape(const Shape& o) : name(o.name),polys(o.polys)
 {
