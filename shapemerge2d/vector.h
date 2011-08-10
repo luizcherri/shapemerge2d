@@ -22,7 +22,7 @@ namespace shapemerge2d
 		bool operator==(const Vector& o) const;
 		int64_t scalarprod(const Vector& o) const
 		{
-			return x*o.x+y*o.y;
+		        return int64_t(x)*o.x+int64_t(y)*o.y;
 		}
 		std::string __repr__() const
 		{
