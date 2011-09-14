@@ -1,6 +1,7 @@
 from pyshapemerge2d import Shape,Polygon,Vertex,vvector,pvector
 
 def test_shape_eq(): 
+    assert 0
     polya1=Polygon(vvector([
         Vertex(0,0),Vertex(1,0),Vertex(1,1),Vertex(0,1)]))
     polya2=Polygon(vvector([

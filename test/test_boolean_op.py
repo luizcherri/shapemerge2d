@@ -7,7 +7,6 @@ from itertools import izip,count
 
 vorig=Vertex
 def test_edge_sort():
-    assert false
     b=BooleanOp()
     v=vorig(0,0)
     for x in xrange(100):
