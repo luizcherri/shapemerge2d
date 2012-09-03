@@ -179,8 +179,16 @@ struct BooleanOrStrategy : public BooleanOpStrategy
 	BooleanOrStrategy(){shape_a=shape_b=0;}
 	virtual void init(Shape* a,Shape* b);
 	virtual BooleanUpResult evaluate(const Cell& cell);
-
 };
+struct BooleanSubStrategy : public BooleanOpStrategy
+{
+	Shape* shape_a;
+	Shape* shape_b;
+	BooleanSubStrategy(){shape_a=shape_b=0;}
+	virtual void init(Shape* a,Shape* b);
+	virtual BooleanUpResult evaluate(const Cell& cell);
+};
+
 struct TidyStrategy : public BooleanOpStrategy
 {
 	Shape* shape_a;

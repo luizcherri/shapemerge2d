@@ -23,6 +23,27 @@ Shape shape_union(const Shape& shape_ca,const Shape& shape_cb)
     Shape ret=bo.step11_get_result();
     return ret;
 }
+Shape shape_subtraction(const Shape& shape_ca,const Shape& shape_cb)
+{
+	Shape shape_a=shape_ca;
+	Shape shape_b=shape_cb;
+    BooleanOp bo;
+    bo.step1_add_lines(&shape_a,&shape_b);
+    bo.step2_intersect_lines();
+
+    bo.step3_create_edges();
+    bo.step4_eliminate_deadends();
+    bo.step5_create_cells();
+    bo.step5b_determine_cell_hierarchy();
+    bo.step6_determine_cell_cover();
+    BooleanSubStrategy strat;
+    bo.step7_classify_cells(&strat);
+    bo.step8_merge_cells();
+    bo.step9_calc_result();
+    Shape ret=bo.step11_get_result();
+    return ret;
+}
+
 Shape tidy_up_polygon(const Polygon& a)
 {
 	Shape shape_a("a",a);
@@ -54,6 +75,12 @@ Shape shape_union(const Polygon& a,const Polygon& b)
 	Shape sb("b",b);
 	return shape_union(sa,sb);
 }
+Shape shape_subtraction(const Polygon& a,const Polygon& b)
+{
+	Shape sa("a",a);
+	Shape sb("b",b);
+	return shape_subtraction(sa,sb);
+}
 
 Shape Polygon::merge(const Shape& other) const
 {
@@ -62,6 +89,10 @@ Shape Polygon::merge(const Shape& other) const
 Shape Polygon::merge(const Polygon& other) const
 {
 	return shape_union(Shape("a",*this),Shape("b",other));
+}
+Shape Polygon::subtract(const Polygon& other) const
+{
+	return shape_subtraction(Shape("a",*this),Shape("b",other));
 }
 Shape Shape::merge(const Shape& other) const
 {

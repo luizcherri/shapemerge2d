@@ -66,6 +66,36 @@ namespace shapemerge2d
 	 * @return a union b
 	 */
 	Shape shape_union(const Polygon& a,const Polygon& b);
+
+    
+	/**
+	 * Boolean subtraction operation between polygons a and b.
+	 * Result will look like if
+	 * polygon b took a bite out of polygon a.
+	 * If a and b do not overlap, the result will be a unmodified.
+     * The area covered by b will not be covered by polygon in the output.
+	 *
+	 * Note that the output may have holes, b cuts a into two 
+     * (or more) halves.
+	 *
+	 * @return a subtract b
+	 */
+	Shape shape_subtraction(const Polygon& a,const Polygon& b);
+
+	/**
+	 * Boolean subtraction operation between shapes a and b.
+	 * Result will look like if
+	 * shape b took a bite out of shape a.
+	 * If a and b do not overlap, the result will be a unmodified.
+     * The area covered by b will not be covered by shape in the output.
+	 *
+	 * Note that the output may have holes, b cuts a into two 
+     * (or more) halves.
+	 *
+	 * @return a subtract b
+	 */
+	Shape shape_subtraction(const Shape& a,const Shape& b);
+
 	/**
 	* Tidy up a polygon. Any loops are eliminated, and new
 	* polygons are created instead.

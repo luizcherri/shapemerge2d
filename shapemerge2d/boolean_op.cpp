@@ -648,6 +648,49 @@ BooleanUpResult TidyStrategy::evaluate(const Cell& cell)
 		return VOID;
 	return SOLID;
 }
+void BooleanSubStrategy::init(Shape* a,Shape* b)
+{
+	shape_a=a;
+	shape_b=b;
+}
+BooleanUpResult BooleanSubStrategy::evaluate(const Cell& cell)
+{
+	if (cell.cover.empty())
+		return VOID;
+	const Polygon* smallest_a=NULL;
+	const Polygon* smallest_b=NULL;
+	uint64_t smallest_a_area=(uint64_t)-1;
+	uint64_t smallest_b_area=(uint64_t)-1;
+
+
+	BOOST_FOREACH(const Polygon* cov,cell.cover)
+	{
+		uint64_t area=cov->naive_double_area();
+		if (cov->get_shape()==shape_a)
+		{
+			if (smallest_a==NULL || area<smallest_a_area)
+			{
+				smallest_a=cov;
+				smallest_a_area=area;
+			}
+		}
+		if (cov->get_shape()==shape_b)
+		{
+			if (smallest_b==NULL || area<smallest_b_area)
+			{
+				smallest_b=cov;
+				smallest_b_area=area;
+			}
+		}
+	}
+	bool asolid=smallest_a ? smallest_a->get_kind()==Polygon::SOLID : false;
+	bool bsolid=smallest_b ? smallest_b->get_kind()==Polygon::SOLID : false;
+	if (asolid && !bsolid) //OR Operation
+		return SOLID;
+	else
+		return HOLE;
+}
+
 void BooleanOrStrategy::init(Shape* a,Shape* b)
 {
 	shape_a=a;

@@ -94,9 +94,26 @@ namespace shapemerge2d
 		 *
 		 */
 		Polygon(const std::vector<Vertex>& vs,Kind pkind=SOLID,Shape* pshape=NULL);
+		Polygon(const Polygon& o) :
+	        kind(o.kind),
+	        shape(o.shape),
+	        doublearea(o.doublearea),
+	        lines(o.lines),
+	        reserved(o.reserved)
+        {
+	        switch(kind)
+	        {
+	        case HOLE: break;
+	        case SOLID: break;;
+            default:
+                std::cerr<<"Kind: "<<kind<<"\n";
+                throw std::runtime_error("Internal error in polygon2");
+	        }
+            
+        }
 		void reverse();
 		const std::vector<Line>& get_lines()const;
-		std::vector<Vertex> get_vertices()const;
+		    std::vector<Vertex> get_vertices()const;
 		/**
 		 * Return the vertex with the lowest x coordinate, and if several have
 		 * the same, the one with the lowest y coodinate.
@@ -173,6 +190,14 @@ namespace shapemerge2d
         void set_kind(Kind pkind)
         {
         	kind=pkind;
+	        switch(kind)
+	        {
+	        case HOLE: break;
+	        case SOLID: break;;
+            default:
+                std::cerr<<"Kind: "<<kind<<"\n";
+                throw std::runtime_error("Internal error in polygon3");
+	        }
         	///printf("kind set to: %s\n",get_kind_str().c_str());
         }
 
@@ -186,6 +211,12 @@ namespace shapemerge2d
          * shape_union(Shape("a",*this),Shape("b",other))
          */
         Shape merge(const Polygon& other) const;
+        
+        /**
+         * Convenience function, equivalent to:
+         * shape_subtraction(Shape("a",*this),Shape("b",other))
+         */
+        Shape subtract(const Polygon& other) const;
 
         std::vector<Vertex> first_entrance(const Line& line);
 

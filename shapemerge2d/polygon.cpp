@@ -3,6 +3,7 @@
 #include "math.h"
 #include "limits.h"
 #include "vector.h"
+#include <iostream>
 
 namespace shapemerge2d
 {
@@ -608,6 +609,15 @@ Polygon::Polygon(const std::vector<Vertex>& vs,Kind pkind,Shape* pshape) :
 	kind(pkind),
 	shape(pshape)
 {
+	switch(kind)
+	{
+	case HOLE: break;
+	case SOLID: break;;
+    default:
+        std::cerr<<"Kind: "<<kind<<"\n";
+        throw std::runtime_error("Internal error in polygon:");
+	}
+	
 	if (vs.size()<3) throw std::runtime_error("A polygon must have at least 3 vertices");
 	Vertex last=vs[vs.size()-1];
 	std::vector<Vertex> temp;
